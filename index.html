@@ -1743,6 +1743,20 @@
       async loadFromSharedCloudDB(name) {
         if (!name) return;
         const key = name.trim().toLowerCase();
+
+        // 1. Try loading from Neon PostgreSQL on Netlify (/api/load)
+        try {
+          const netlifyResp = await fetch(`/api/load?name=${encodeURIComponent(name)}`);
+          if (netlifyResp.ok) {
+            const json = await netlifyResp.json();
+            if (json.success && json.data) {
+              this.applySaveData(json.data, false);
+              return;
+            }
+          }
+        } catch(e) {}
+
+        // 2. Fallback to Shared Global Cloud DB
         try {
           const CLOUD_DB_ID = "ff808181a09d98f701a0f1aa0d0c49ed";
           const resp = await fetch(`https://api.restful-api.dev/objects/${CLOUD_DB_ID}`);
@@ -1751,12 +1765,10 @@
             const players = (json.data && json.data.players) || {};
             const cloudSave = players[key];
             if (cloudSave && cloudSave.stars !== undefined) {
-              // If cloud save exists and has higher or equal stars than local, restore it seamlessly
               if ((cloudSave.stars || 0) >= (this.stars || 0)) {
                 this.applySaveData(cloudSave, false);
               }
             } else {
-              // First time this player plays: register to cloud immediately
               await this.syncCloudBackground();
             }
           }

@@ -1,0 +1,25 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/api/save"
+  to = "/.netlify/functions/save"
+  status = 200
+
+[[redirects]]
+  from = "/api/load"
+  to = "/.netlify/functions/load"
+  status = 200
+
+[[redirects]]
+  from = "/api/db/stats"
+  to = "/.netlify/functions/stats"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
