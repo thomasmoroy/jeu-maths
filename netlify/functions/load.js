@@ -17,27 +17,29 @@ exports.handler = async (event, context) => {
 
   try {
     const params = event.queryStringParameters || {};
+    const googleId = (params.googleId || params.google_id || '').trim();
+    const email = (params.email || '').trim().toLowerCase();
     const queryKey = (params.code || params.name || params.player || '').trim();
 
-    if (!queryKey) {
+    if (!googleId && !email && !queryKey) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ success: false, error: 'Paramètre code ou nom manquant' })
+        body: JSON.stringify({ success: false, error: 'Paramètre googleId, email, code ou nom manquant' })
       };
     }
 
-    const upperKey = queryKey.toUpperCase();
+    const upperKey = queryKey ? queryKey.toUpperCase() : '';
     const db = getDB();
 
     if (db) {
-      // Find by code OR case-insensitive name
-      const rows = await db.select().from(players).where(
-        or(
-          eq(players.code, upperKey),
-          sql`LOWER(${players.name}) = LOWER(${queryKey})`
-        )
-      ).limit(1);
+      const conditions = [];
+      if (googleId) conditions.push(eq(players.googleId, googleId));
+      if (email) conditions.push(eq(players.email, email));
+      if (upperKey) conditions.push(eq(players.code, upperKey));
+      if (queryKey) conditions.push(sql`LOWER(${players.name}) = LOWER(${queryKey})`);
+
+      const rows = await db.select().from(players).where(or(...conditions)).limit(1);
 
       if (rows.length > 0) {
         const p = rows[0];
@@ -46,8 +48,10 @@ exports.handler = async (event, context) => {
           headers,
           body: JSON.stringify({
             success: true,
-            db: 'Netlify Database (Postgres)',
+            db: 'Netlify PostgreSQL',
             code: p.code,
+            googleId: p.googleId,
+            email: p.email,
             name: p.name,
             stars: p.stars,
             data: p.data,
@@ -60,19 +64,20 @@ exports.handler = async (event, context) => {
           headers,
           body: JSON.stringify({
             success: false,
-            error: `Joueur '${queryKey}' introuvable dans Netlify Database`
+            error: `Aucun compte trouvé`
           })
         };
       }
     } else {
-      const p = memoryFallback[upperKey] || memoryFallback[queryKey.toLowerCase()];
+      const key = googleId || email || upperKey || queryKey.toLowerCase();
+      const p = memoryFallback[key];
       if (p) {
         return {
           statusCode: 200,
           headers,
           body: JSON.stringify({
             success: true,
-            db: 'Netlify Local Store',
+            db: 'Memory Fallback',
             code: p.code,
             name: p.name,
             stars: p.stars,
@@ -84,7 +89,7 @@ exports.handler = async (event, context) => {
       return {
         statusCode: 404,
         headers,
-        body: JSON.stringify({ success: false, error: `Joueur '${queryKey}' introuvable` })
+        body: JSON.stringify({ success: false, error: `Compte introuvable` })
       };
     }
   } catch (error) {

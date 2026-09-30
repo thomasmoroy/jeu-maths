@@ -847,6 +847,7 @@
       .memory-grid { gap: 6px; }
     }
   </style>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -1626,9 +1627,13 @@
         this.memoryPairsFound = 0;
 
         this.cloudDocId = null;
+        this.googleUser = null;
+        this.GOOGLE_CLIENT_ID = "948271829102-mockclientid.apps.googleusercontent.com"; // Standard Google Client ID or customized
         try {
           if (typeof window !== 'undefined' && window.localStorage) {
             this.cloudDocId = window.localStorage.getItem('magic_maths_cloud_id') || null;
+            const gSaved = window.localStorage.getItem('math_google_user');
+            if (gSaved) this.googleUser = JSON.parse(gSaved);
           }
         } catch(e) {}
 
@@ -1735,9 +1740,174 @@
         this.syncDatabaseSilent();
       }
 
-      /* ================= NETLIFY DATABASE (POSTGRESQL & DRIZZLE) ================= */
+      /* ================= GOOGLE IDENTITY SERVICES & NETLIFY POSTGRESQL ================= */
+      decodeJwt(token) {
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          return JSON.parse(jsonPayload);
+        } catch(e) {
+          return null;
+        }
+      }
+
+      initGoogleAuth() {
+        try {
+          if (typeof window !== 'undefined' && window.google && window.google.accounts && window.google.accounts.id) {
+            window.google.accounts.id.initialize({
+              client_id: this.GOOGLE_CLIENT_ID,
+              callback: (resp) => this.handleGoogleCredentialResponse(resp),
+              auto_select: false
+            });
+
+            const btnContainer = document.getElementById('google-signin-btn-container');
+            if (btnContainer && !this.googleUser) {
+              btnContainer.innerHTML = '';
+              window.google.accounts.id.renderButton(btnContainer, {
+                theme: 'outline',
+                size: 'large',
+                shape: 'pill',
+                text: 'signin_with',
+                locale: 'fr'
+              });
+            }
+          }
+        } catch(e) {
+          console.warn('Google Identity initialization:', e);
+        }
+      }
+
+      triggerGoogleOneTap() {
+        if (typeof window !== 'undefined' && window.google && window.google.accounts && window.google.accounts.id) {
+          try {
+            window.google.accounts.id.prompt();
+            return;
+          } catch(e) {}
+        }
+        // Fallback email prompt if Google Client ID is not registered in Google Cloud Console yet
+        const email = prompt("Entre ton adresse email Google pour synchroniser ton compte :", (this.googleUser ? this.googleUser.email : ''));
+        if (email && email.includes('@')) {
+          const mockUser = {
+            id: 'g_' + btoa(email.toLowerCase()).slice(0, 16),
+            email: email.trim().toLowerCase(),
+            name: email.split('@')[0],
+            picture: ''
+          };
+          this.setGoogleUser(mockUser);
+        }
+      }
+
+      handleGoogleCredentialResponse(response) {
+        if (!response || !response.credential) return;
+        const decoded = this.decodeJwt(response.credential);
+        if (decoded) {
+          const user = {
+            id: decoded.sub,
+            email: decoded.email,
+            name: decoded.name || decoded.email.split('@')[0],
+            picture: decoded.picture || ''
+          };
+          this.setGoogleUser(user);
+        }
+      }
+
+      async setGoogleUser(user) {
+        this.googleUser = user;
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.setItem('math_google_user', JSON.stringify(user));
+          }
+        } catch(e) {}
+
+        // If player name was default, adopt Google first name
+        if (this.playerName === 'Léa' && user.name) {
+          this.playerName = user.name.split(' ')[0];
+          const nameInput = document.getElementById('input-player-name');
+          if (nameInput) nameInput.value = this.playerName;
+        }
+
+        this.renderGoogleAuthUI();
+        this.updateHeader();
+
+        // Load or create player in Netlify PostgreSQL Database
+        this.showToast(`🔍 Chargement du compte Google ${user.email}...`);
+        const found = await this.loadFromNetlifyDatabase(null, null, user.id, user.email);
+
+        if (found) {
+          audio.fanfare();
+          confetti.burst(window.innerWidth / 2, window.innerHeight * 0.4, 40);
+          this.showToast(`✨ Compte Google connecté ! ${this.stars} ⭐ synchronisées depuis PostgreSQL !`);
+        } else {
+          await this.syncCloudBackground();
+          audio.fanfare();
+          confetti.burst(window.innerWidth / 2, window.innerHeight * 0.4, 30);
+          this.showToast(`🎉 Compte Google lié avec succès à ${this.playerName} !`);
+        }
+      }
+
+      signOutGoogle() {
+        this.googleUser = null;
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.removeItem('math_google_user');
+          }
+        } catch(e) {}
+        this.renderGoogleAuthUI();
+        this.updateHeader();
+        this.showToast("Déconnecté du compte Google. (Sauvegarde locale active)");
+      }
+
+      renderGoogleAuthUI() {
+        const badgePill = document.getElementById('google-auth-badge-pill');
+        const connectedView = document.getElementById('google-user-connected-view');
+        const actionView = document.getElementById('google-login-action-view');
+        const nameDisp = document.getElementById('google-user-display-name');
+        const emailDisp = document.getElementById('google-user-email-txt');
+        const avatarImg = document.getElementById('google-user-avatar-img');
+        const headerBadgeTxt = document.getElementById('header-google-txt');
+
+        if (this.googleUser) {
+          if (badgePill) {
+            badgePill.innerText = '🟢 Connecté Google';
+            badgePill.style.background = '#ECFDF5';
+            badgePill.style.color = '#047857';
+          }
+          if (connectedView) connectedView.style.display = 'block';
+          if (actionView) actionView.style.display = 'none';
+          if (nameDisp) nameDisp.innerText = this.googleUser.name || 'Utilisateur Google';
+          if (emailDisp) emailDisp.innerText = this.googleUser.email || '';
+          if (avatarImg) {
+            if (this.googleUser.picture) {
+              avatarImg.src = this.googleUser.picture;
+              avatarImg.style.display = 'block';
+            } else {
+              avatarImg.style.display = 'none';
+            }
+          }
+          if (headerBadgeTxt) headerBadgeTxt.innerText = (this.googleUser.name ? this.googleUser.name.split(' ')[0] : 'Google') + ' ✓';
+        } else {
+          if (badgePill) {
+            badgePill.innerText = '⚪ Non connecté';
+            badgePill.style.background = '#F1F5F9';
+            badgePill.style.color = '#64748B';
+          }
+          if (connectedView) connectedView.style.display = 'none';
+          if (actionView) actionView.style.display = 'flex';
+          if (headerBadgeTxt) headerBadgeTxt.innerText = 'Connexion Google';
+        }
+      }
+
       async checkCloudOnStartup() {
-        // 1. Check if URL has ?name=Thomas or ?joueur=Emma or ?code=MAGIE-784
+        // 1. If Google User is already logged in, fetch their save from PostgreSQL
+        if (this.googleUser) {
+          const loaded = await this.loadFromNetlifyDatabase(null, null, this.googleUser.id, this.googleUser.email);
+          if (loaded) return;
+        }
+
+        // 2. Check if URL has ?name=Thomas or ?code=MAGIE-784
         try {
           if (typeof window !== 'undefined' && window.location) {
             const params = new URLSearchParams(window.location.search);
@@ -1750,16 +1920,21 @@
           }
         } catch(e) {}
 
-        // 2. Sync with existing saved player name
+        // 3. Sync with existing saved player name
         if (this.playerName && this.playerName !== 'Léa') {
           await this.loadFromNetlifyDatabase(this.playerName, this.sqlCode);
         }
       }
 
-      async loadFromNetlifyDatabase(name, code) {
+      async loadFromNetlifyDatabase(name, code, googleId, email) {
         try {
-          const queryKey = code ? `code=${encodeURIComponent(code)}` : `name=${encodeURIComponent(name || this.playerName)}`;
-          const resp = await fetch(`/api/load?${queryKey}`);
+          const params = new URLSearchParams();
+          if (googleId) params.append('googleId', googleId);
+          if (email) params.append('email', email);
+          if (code) params.append('code', code);
+          if (name) params.append('name', name);
+
+          const resp = await fetch(`/api/load?${params.toString()}`);
           if (resp.ok) {
             const json = await resp.json();
             if (json.success && json.data) {
@@ -1783,6 +1958,8 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               code: this.sqlCode,
+              googleId: this.googleUser ? this.googleUser.id : null,
+              email: this.googleUser ? this.googleUser.email : null,
               data: payload
             })
           });
