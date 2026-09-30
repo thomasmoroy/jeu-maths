@@ -1,0 +1,12 @@
+{
+  "name": "academie-des-magiciens-des-nombres",
+  "version": "1.0.0",
+  "description": "Jeu éducatif ludique de mathématiques pour les tables de multiplication et d'addition (CE2/CM1 - 9 ans)",
+  "main": "index.html",
+  "scripts": {
+    "start": "python3 server.py"
+  },
+  "keywords": ["maths", "jeu-educatif", "tables-de-multiplication", "addition", "ce2", "cm1"],
+  "author": "Académie des Magiciens",
+  "license": "MIT"
+}

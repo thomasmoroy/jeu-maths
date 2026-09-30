@@ -1,0 +1,2845 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>L'Académie des Magiciens des Nombres - Maths 9 ans</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: rgba(0,0,0,0);
+    }
+
+    :root {
+      --primary: #6366F1;
+      --primary-dark: #4F46E5;
+      --secondary: #06B6D4;
+      --accent: #EC4899;
+      --yellow: #F59E0B;
+      --green: #10B981;
+      --red: #EF4444;
+      --dark: #1E293B;
+      --card-bg: #FFFFFF;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+      min-height: 100vh;
+      color: #1E293B;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Container */
+    #main-container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Header Bar */
+    header {
+      background: rgba(255, 255, 255, 0.98);
+      border-radius: 20px;
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.18);
+      border: 3px solid #FFFFFF;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .header-player-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #EEF2FF;
+      border: 2px solid #C7D2FE;
+      padding: 5px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .header-player-btn:hover {
+      background: #E0E7FF;
+      transform: translateY(-2px);
+    }
+    .header-avatar-circle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: white;
+      border: 2px solid #6366F1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      overflow: hidden;
+    }
+    .header-player-name {
+      font-weight: 900;
+      font-size: 1.05rem;
+      color: #4338CA;
+    }
+    .header-stats-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 0.85rem;
+    }
+    .pill-gold { background: #FEF3C7; color: #B45309; }
+    .pill-fire { background: #FFE4E6; color: #E11D48; }
+    .btn-cloud-header {
+      background: linear-gradient(135deg, #059669, #047857);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(5, 150, 105, 0.3);
+    }
+    .btn-icon-round {
+      background: white;
+      border: 2px solid #CBD5E1;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Top Navigation Tabs */
+    .nav-tabs-wrapper {
+      display: flex;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.96);
+      padding: 6px;
+      border-radius: 18px;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav-tabs-wrapper::-webkit-scrollbar { display: none; }
+    
+    .btn-tab {
+      flex: 1;
+      min-width: 90px;
+      background: transparent;
+      border: none;
+      padding: 9px 6px;
+      border-radius: 12px;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 0.82rem;
+      color: #64748B;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .btn-tab:hover { background: #F1F5F9; color: #334155; }
+    .btn-tab.active {
+      background: #6366F1;
+      color: #FFFFFF;
+      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Panels */
+    .view-panel {
+      display: none;
+      background: #FFFFFF;
+      border-radius: 22px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+      border: 3px solid #FFFFFF;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .view-panel.active { display: flex; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px dashed #E2E8F0;
+      padding-bottom: 12px;
+    }
+    .panel-heading {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: #1E293B;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .btn-primary-cta {
+      background: linear-gradient(135deg, #6366F1, #4F46E5);
+      color: white;
+      border: none;
+      padding: 13px 22px;
+      border-radius: 16px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      width: 100%;
+      box-shadow: 0 5px 15px rgba(99, 102, 241, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.1s, box-shadow 0.1s;
+    }
+    .btn-primary-cta:hover { transform: translateY(-2px); }
+    .btn-primary-cta:active { transform: translateY(1px); }
+
+    /* SQL Database Box */
+    .db-box {
+      background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+      border: 3px solid #6EE7B7;
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .db-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #FFFFFF;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+    .db-table-view {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      background: #FFFFFF;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .db-table-view th {
+      background: #059669;
+      color: #FFFFFF;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    .db-table-view td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #E2E8F0;
+    }
+
+    /* Profile Panel & Avatar Picker */
+    .profile-card {
+      background: linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 100%);
+      border: 3px solid #C7D2FE;
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .name-input-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .name-input-field {
+      flex: 1;
+      padding: 12px 16px;
+      border: 3px solid #CBD5E1;
+      border-radius: 14px;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #1E293B;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .name-input-field:focus {
+      border-color: #6366F1;
+      background: #FFFFFF;
+    }
+    .avatar-grid-picker {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .avatar-choice-btn {
+      background: #FFFFFF;
+      border: 3px solid #E2E8F0;
+      border-radius: 18px;
+      padding: 10px 4px;
+      font-size: 2.2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s;
+    }
+    .avatar-choice-btn:hover {
+      transform: scale(1.08);
+      border-color: #6366F1;
+    }
+    .avatar-choice-btn.selected {
+      border-color: #6366F1;
+      background: #EEF2FF;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+      transform: scale(1.05);
+    }
+    .avatar-choice-lbl {
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #475569;
+    }
+
+    /* Mode Cards */
+    .game-modes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 12px;
+    }
+    .mode-card {
+      border-radius: 18px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      border: 2px solid #E2E8F0;
+      transition: all 0.15s;
+    }
+    .mode-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+    }
+    .mode-card-adventure { background: #FFF7ED; border-color: #FED7AA; }
+    .mode-card-chrono { background: #FFF1F2; border-color: #FECDD3; }
+    .mode-card-mystery { background: #FAF5FF; border-color: #E9D5FF; }
+    .mode-card-memory { background: #F0FDF4; border-color: #BBF7D0; }
+    .mode-card-dojo { background: #EEF2FF; border-color: #C7D2FE; }
+
+    /* Arena View */
+    .arena-card {
+      background: #F8FAFC;
+      border: 3px solid #E2E8F0;
+      border-radius: 20px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      position: relative;
+    }
+    .arena-top {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .progress-bar-wrap {
+      flex: 1;
+      height: 12px;
+      background: #E2E8F0;
+      border-radius: 8px;
+      margin: 0 12px;
+      overflow: hidden;
+    }
+    .progress-bar-val {
+      height: 100%;
+      background: linear-gradient(90deg, #10B981, #06B6D4);
+      width: 0%;
+      transition: width 0.25s;
+    }
+    .timer-tag {
+      background: #FEE2E2;
+      color: #DC2626;
+      font-weight: 900;
+      font-size: 0.95rem;
+      padding: 4px 10px;
+      border-radius: 12px;
+    }
+
+    /* Boss Box */
+    .boss-hud {
+      width: 100%;
+      background: linear-gradient(135deg, #1E1B4B, #312E81);
+      border-radius: 16px;
+      padding: 10px 14px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 2px solid #6366F1;
+    }
+    .boss-hp-outer {
+      width: 100px;
+      height: 10px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .boss-hp-inner {
+      height: 100%;
+      background: #EF4444;
+      width: 100%;
+      transition: width 0.3s;
+    }
+
+    .btn-dragon-power {
+      background: linear-gradient(135deg, #F59E0B, #D97706);
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 3px 8px rgba(245, 158, 11, 0.3);
+    }
+    .btn-dragon-power:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      filter: grayscale(1);
+    }
+
+    /* Formula */
+    .formula-box-row {
+      font-size: 3.2rem;
+      font-weight: 900;
+      color: #1E293B;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 6px 0;
+    }
+    .formula-op { color: #6366F1; }
+    .formula-target-slot {
+      min-width: 75px;
+      height: 70px;
+      border: 3px dashed #CBD5E1;
+      border-radius: 16px;
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #6366F1;
+      font-size: 2.8rem;
+    }
+    .formula-target-slot.mystery {
+      border-color: #A855F7;
+      color: #9333EA;
+      background: #FAF5FF;
+    }
+
+    /* Answers */
+    .answers-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      max-width: 480px;
+    }
+    .btn-choice {
+      background: #FFFFFF;
+      border: 3px solid #E2E8F0;
+      border-bottom: 6px solid #CBD5E1;
+      border-radius: 18px;
+      font-size: 1.85rem;
+      font-weight: 900;
+      color: #1E293B;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.1s ease;
+    }
+    .btn-choice:hover { border-color: #6366F1; transform: translateY(-2px); }
+    .btn-choice:active { transform: translateY(2px); border-bottom-width: 3px; }
+    .btn-choice.correct {
+      background: #10B981 !important;
+      color: #FFFFFF !important;
+      border-color: #059669 !important;
+      border-bottom-color: #047857 !important;
+    }
+    .btn-choice.wrong {
+      background: #EF4444 !important;
+      color: #FFFFFF !important;
+      border-color: #DC2626 !important;
+      border-bottom-color: #B91C1C !important;
+    }
+    .btn-choice.eliminated {
+      opacity: 0.15;
+      pointer-events: none;
+      text-decoration: line-through;
+    }
+
+    /* Memory Game Cards Grid */
+    .memory-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+      max-width: 480px;
+      margin: 10px auto;
+    }
+    .memory-card-btn {
+      aspect-ratio: 1;
+      background: #EEF2FF;
+      border: 3px solid #C7D2FE;
+      border-radius: 14px;
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: #4338CA;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .memory-card-btn.flipped {
+      background: #FFFFFF;
+      border-color: #6366F1;
+      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+    }
+    .memory-card-btn.matched {
+      background: #ECFDF5;
+      border-color: #10B981;
+      color: #059669;
+      pointer-events: none;
+      transform: scale(0.95);
+    }
+
+    /* Pythagoras Table */
+    .pythagoras-table {
+      display: grid;
+      grid-template-columns: repeat(11, 1fr);
+      gap: 3px;
+      margin: 10px 0;
+      background: #F1F5F9;
+      padding: 6px;
+      border-radius: 12px;
+      overflow-x: auto;
+    }
+    .pyt-cell {
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      border-radius: 6px;
+      background: #FFFFFF;
+      color: #475569;
+    }
+    .pyt-cell.header { background: #6366F1; color: #FFFFFF; font-weight: 900; }
+    .pyt-cell.mastered { background: #A7F3D0; color: #065F46; }
+
+    /* Segmented Switches */
+    .segmented-switch {
+      display: flex;
+      background: #F1F5F9;
+      border-radius: 14px;
+      padding: 4px;
+      gap: 4px;
+    }
+    .switch-option {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.85rem;
+      color: #64748B;
+      transition: all 0.15s;
+    }
+    .switch-option.active {
+      background: #FFFFFF;
+      color: #6366F1;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+
+    /* Table selection grid */
+    .table-buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
+      gap: 8px;
+    }
+    .btn-table-choice {
+      background: #FFFFFF;
+      border: 2px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 10px 4px;
+      font-weight: 800;
+      font-size: 0.95rem;
+      color: #334155;
+      transition: all 0.15s;
+    }
+    .btn-table-choice.selected {
+      background: #6366F1;
+      border-color: #4F46E5;
+      color: #FFFFFF;
+      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    }
+
+    /* Pet Sanctuary UI */
+    .pet-hero-room {
+      background: linear-gradient(180deg, #E0F2FE 0%, #BAE6FD 100%);
+      border: 3px solid #7DD3FC;
+      border-radius: 20px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      text-align: center;
+    }
+    .pet-svg-box { width: 140px; height: 140px; }
+    
+    .pet-picker-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .btn-pet-select {
+      background: #FFFFFF;
+      border: 2px solid #CBD5E1;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-weight: 800;
+      font-size: 0.85rem;
+    }
+    .btn-pet-select.active {
+      border-color: #0284C7;
+      background: #E0F2FE;
+      color: #0369A1;
+    }
+
+    .shop-items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+    }
+    .shop-card {
+      background: #FFFFFF;
+      border: 2px solid #E2E8F0;
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .shop-btn {
+      width: 100%;
+      background: #FBBF24;
+      border: none;
+      padding: 6px;
+      border-radius: 10px;
+      font-weight: 800;
+      font-size: 0.82rem;
+      margin-top: 4px;
+    }
+    .shop-btn.owned { background: #E2E8F0; color: #475569; }
+    .shop-btn.equipped { background: #10B981; color: #FFFFFF; }
+
+    /* Adventure Levels */
+    .world-block {
+      background: #F8FAFC;
+      border: 2px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .levels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+      gap: 8px;
+    }
+    .btn-level {
+      background: #FFFFFF;
+      border: 2px solid #CBD5E1;
+      border-radius: 14px;
+      padding: 8px 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s;
+    }
+    .btn-level.unlocked {
+      border-color: #6366F1;
+      background: linear-gradient(145deg, #FFFFFF, #EEF2FF);
+      box-shadow: 0 3px 8px rgba(99, 102, 241, 0.15);
+    }
+    .btn-level.completed { border-color: #10B981; background: #ECFDF5; }
+    .btn-level.boss-node { border-color: #EF4444; background: #FEF2F2; }
+
+    /* Tips & Grimoire */
+    .tip-card {
+      background: #F8FAFC;
+      border: 2px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .fingers-row {
+      display: flex;
+      justify-content: center;
+      gap: 5px;
+      margin: 8px 0;
+    }
+    .btn-finger {
+      width: 32px;
+      height: 52px;
+      background: #FFEDD5;
+      border: 2px solid #FDBA74;
+      border-radius: 10px;
+      font-weight: 900;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 4px;
+      transition: all 0.15s;
+    }
+    .btn-finger.folded {
+      background: #94A3B8;
+      border-color: #64748B;
+      color: #FFFFFF;
+      height: 28px;
+      margin-top: 24px;
+    }
+
+    /* Diplôme Generator */
+    .diploma-box {
+      background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+      border: 4px double #D97706;
+      border-radius: 20px;
+      padding: 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-card {
+      background: #FFFFFF;
+      border-radius: 24px;
+      max-width: 440px;
+      width: 100%;
+      padding: 24px 18px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Toast */
+    .toast-popup {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #1E293B;
+      color: #FFFFFF;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: 800;
+      font-size: 0.9rem;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease-out;
+    }
+    .toast-popup.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 600px) {
+      .formula-box-row { font-size: 2.4rem; }
+      .formula-target-slot { min-width: 65px; height: 60px; font-size: 2.2rem; }
+      .btn-choice { font-size: 1.5rem; padding: 12px; }
+      .btn-tab { min-width: 75px; font-size: 0.75rem; padding: 7px 3px; }
+      .memory-grid { gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="confetti-canvas"></canvas>
+
+  <div id="main-container">
+    
+    <!-- Top Header -->
+    <header>
+      <div class="header-player-btn" onclick="app.switchTab('profile')" title="Modifier mon profil et mon avatar">
+        <div class="header-avatar-circle" id="header-avatar-icon">🧙‍♀️</div>
+        <div>
+          <div style="font-size:0.72rem; color:#64748B; font-weight:800;">PROFIL MAGICIENNE</div>
+          <div class="header-player-name" id="player-display-name">Léa ✨</div>
+        </div>
+      </div>
+      <div class="header-stats-group">
+        <div class="badge-pill pill-gold">⭐ <span id="stat-stars">25</span></div>
+        <div class="badge-pill pill-fire">🔥 <span id="stat-streak">0</span></div>
+        <button class="btn-cloud-header" onclick="app.openDatabaseModal()" title="Base de données SQL">
+          🗄️ Base SQL
+        </button>
+        <button class="btn-icon-round" id="btn-sound-toggle" onclick="app.toggleSound()">🔊</button>
+      </div>
+    </header>
+
+    <!-- Top Navigation Tabs (9 rich modes) -->
+    <nav class="nav-tabs-wrapper">
+      <button class="btn-tab active" id="tab-home" onclick="app.switchTab('home')">🏠 Accueil</button>
+      <button class="btn-tab" id="tab-profile" onclick="app.switchTab('profile')">👤 Mon Profil</button>
+      <button class="btn-tab" id="tab-adventure" onclick="app.switchTab('adventure')">🏰 Quête Mondes</button>
+      <button class="btn-tab" id="tab-mystery" onclick="app.switchTab('mystery')">🔍 Calcul à Trou</button>
+      <button class="btn-tab" id="tab-memory" onclick="app.switchTab('memory')">🃏 Cartes Memory</button>
+      <button class="btn-tab" id="tab-chrono" onclick="app.switchTab('chrono')">⚡ Défi 60s</button>
+      <button class="btn-tab" id="tab-dojo" onclick="app.switchTab('dojo')">🎯 Dojo Libre</button>
+      <button class="btn-tab" id="tab-pet" onclick="app.switchTab('pet')">🐉 Dragon</button>
+      <button class="btn-tab" id="tab-tips" onclick="app.switchTab('tips')">💡 Diplôme</button>
+    </nav>
+
+    <!-- ==========================================
+         PANEL 1: HOME & QUICK LAUNCH
+    =========================================== -->
+    <div class="view-panel active" id="panel-home">
+      
+      <!-- SQL Database Quick Strip on Home -->
+      <div class="db-box" style="padding:12px 16px; cursor:pointer;" onclick="app.openDatabaseModal()">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.6rem;">🗄️</span>
+            <div>
+              <div style="font-weight:900; font-size:0.92rem; color:#065F46;">
+                Base de Données SQL Connectée : <span id="home-db-code-tag" style="background:#FFFFFF; padding:2px 8px; border-radius:8px; border:1px solid #6EE7B7;">MAGIE-784</span>
+              </div>
+              <div style="font-size:0.75rem; color:#047857;">Enregistrement automatique dans SQLite (<code>database.sqlite</code>) ➔</div>
+            </div>
+          </div>
+          <button class="btn-primary-cta" style="width:auto; padding:6px 14px; font-size:0.82rem; background:#059669;">
+            🗄️ Gérer SQL
+          </button>
+        </div>
+      </div>
+
+      <!-- Welcome Hero -->
+      <div class="hero-welcome">
+        <div class="hero-left">
+          <h2 style="font-size:1.3rem; font-weight:900; color:#1E293B;" id="home-welcome-title">Bienvenue Léa ! 🧙‍♀️</h2>
+          <p style="font-size:0.88rem; color:#475569;">
+            Gagne des étoiles ⭐, nourris ton dragon 🐉 et débloque ton Diplôme de Sorcière des Nombres !
+          </p>
+          <div style="display:flex; gap:10px; margin-top:4px;">
+            <button class="btn-primary-cta" style="width:auto; padding:8px 18px; font-size:0.92rem;" onclick="app.startQuickPlay()">
+              ▶ Partie Rapide (8 calculs)
+            </button>
+            <button class="btn-primary-cta" style="width:auto; padding:8px 16px; font-size:0.88rem; background:#059669;" onclick="app.openDatabaseModal()">
+              🗄️ Sauvegarder dans SQL
+            </button>
+          </div>
+        </div>
+        <div style="width:90px; height:90px;" id="hero-pet-svg"></div>
+      </div>
+
+      <!-- Mode Cards Grid -->
+      <div class="game-modes-grid">
+        
+        <!-- Adventure -->
+        <div class="mode-card mode-card-adventure" onclick="app.switchTab('adventure')">
+          <div>
+            <div style="font-size:2rem; margin-bottom:4px;">🏰</div>
+            <div style="font-weight:900; font-size:1.1rem; color:#9A3412;">La Quête des Mondes</div>
+            <div style="font-size:0.85rem; color:#7C2D12;">12 niveaux avec combats de Boss magiques (Additions, Multiplications, Mixtes).</div>
+          </div>
+          <button class="btn-primary-cta" style="background:#EA580C; font-size:0.9rem; padding:8px;">Jouer l'Aventure ➔</button>
+        </div>
+
+        <!-- Mystery / Calcul à Trou -->
+        <div class="mode-card mode-card-mystery" onclick="app.switchTab('mystery')">
+          <div>
+            <div style="font-size:2rem; margin-bottom:4px;">🔍</div>
+            <div style="font-weight:900; font-size:1.1rem; color:#6B21A8;">Le Nombre Mystère</div>
+            <div style="font-size:0.85rem; color:#581C87;">Trouve le nombre manquant ($7 \times ? = 56$, $? + 15 = 20$). Idéal pour le CM1 !</div>
+          </div>
+          <button class="btn-primary-cta" style="background:#9333EA; font-size:0.9rem; padding:8px;">Élucider le mystère ➔</button>
+        </div>
+
+        <!-- Memory Cards -->
+        <div class="mode-card mode-card-memory" onclick="app.switchTab('memory')">
+          <div>
+            <div style="font-size:2rem; margin-bottom:4px;">🃏</div>
+            <div style="font-weight:900; font-size:1.1rem; color:#166534;">Cartes Mémoire (Memory)</div>
+            <div style="font-size:0.85rem; color:#14532D;">Retourne les cartes pour associer chaque opération à son bon résultat !</div>
+          </div>
+          <button class="btn-primary-cta" style="background:#10B981; font-size:0.9rem; padding:8px;">Jouer au Memory ➔</button>
+        </div>
+
+        <!-- Chrono 60s -->
+        <div class="mode-card mode-card-chrono" onclick="app.switchTab('chrono')">
+          <div>
+            <div style="font-size:2rem; margin-bottom:4px;">⚡</div>
+            <div style="font-weight:900; font-size:1.1rem; color:#9F1239;">Défi Éclair 60s</div>
+            <div style="font-size:0.85rem; color:#881337;">1 minute pour faire le maximum de calculs d'affilée avec combo flammes !</div>
+          </div>
+          <button class="btn-primary-cta" style="background:#E11D48; font-size:0.9rem; padding:8px;">Lancer le Chrono ➔</button>
+        </div>
+
+        <!-- Dojo & Table de Pythagore -->
+        <div class="mode-card mode-card-dojo" onclick="app.switchTab('dojo')">
+          <div>
+            <div style="font-size:2rem; margin-bottom:4px;">🎯</div>
+            <div style="font-weight:900; font-size:1.1rem; color:#3730A3;">Dojo & Table de Pythagore</div>
+            <div style="font-size:0.85rem; color:#312E81;">Révise une table précise et regarde ta carte des 100 multiplications s'allumer !</div>
+          </div>
+          <button class="btn-primary-cta" style="background:#6366F1; font-size:0.9rem; padding:8px;">Choisir ma table ➔</button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ==========================================
+         PANEL 2: PROFILE & AVATAR & SQL DATABASE
+    =========================================== -->
+    <div class="view-panel" id="panel-profile">
+      <div class="panel-header-row">
+        <div class="panel-heading">👤 Profil de l'Élève & Base SQL</div>
+        <div class="badge-pill pill-gold" onclick="app.openDatabaseModal()" style="cursor:pointer;">🗄️ Base SQLite</div>
+      </div>
+
+      <!-- SQL Database Card in Profile -->
+      <div class="db-box">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-weight:900; font-size:1.05rem; color:#065F46; display:flex; align-items:center; gap:8px;">
+            <span>🗄️ Base de Données SQL (SQLite 3)</span>
+          </div>
+          <div class="db-status-pill">🟢 Connecté (<code>database.sqlite</code>)</div>
+        </div>
+        
+        <p style="font-size:0.85rem; color:#065F46;">
+          Ta partie est directement enregistrée dans les tables relationnelles SQL de la base de données (<code>players</code> et <code>player_saves</code>) avec ton Code Joueur SQL.
+        </p>
+
+        <div style="background:#FFFFFF; border:2px dashed #059669; border-radius:14px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+          <div>
+            <div style="font-size:0.75rem; font-weight:800; color:#059669;">TON CODE JOUEUR SQL :</div>
+            <div style="font-size:1.5rem; font-weight:900; color:#065F46; letter-spacing:2px;" id="display-sql-code">MAGIE-784</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn-primary-cta" style="width:auto; padding:8px 14px; font-size:0.85rem; background:#059669;" onclick="app.saveToDatabase()">
+              💾 Enregistrer SQL
+            </button>
+            <button class="btn-primary-cta" style="width:auto; padding:8px 12px; font-size:0.85rem; background:#059669;" onclick="app.copySqlCode()">
+              📋 Copier
+            </button>
+          </div>
+        </div>
+
+        <!-- Restore from SQL code -->
+        <div style="display:flex; gap:8px; align-items:center; margin-top:4px;">
+          <input type="text" id="input-sql-code-load" class="name-input-field" placeholder="Entrer un Code SQL (ex: MAGIE-784)" style="text-transform:uppercase; font-size:0.95rem; padding:9px 12px;">
+          <button class="btn-primary-cta" style="width:auto; padding:9px 16px; font-size:0.9rem; background:#047857;" onclick="app.loadFromDatabase()">
+            📥 Charger depuis SQL
+          </button>
+        </div>
+      </div>
+
+      <div class="profile-card">
+        <div>
+          <label style="font-weight:900; font-size:0.95rem; color:#3730A3; display:block; margin-bottom:6px;">
+            ✏️ Ton Prénom :
+          </label>
+          <div class="name-input-group">
+            <input type="text" id="input-player-name" class="name-input-field" placeholder="Ex: Léa, Emma, Lucas..." maxlength="20" value="Léa">
+            <button class="btn-primary-cta" style="width:auto; padding:12px 20px;" onclick="app.saveProfileName()">
+              Valider
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label style="font-weight:900; font-size:0.95rem; color:#3730A3; display:block; margin-bottom:6px;">
+            🎭 Choisis ton Image d'Avatar :
+          </label>
+          <div class="avatar-grid-picker" id="avatar-picker-grid"></div>
+        </div>
+      </div>
+
+      <!-- Backup file & Reset -->
+      <div style="background:#FFFFFF; border:2px dashed #CBD5E1; border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:10px;">
+        <div style="font-weight:900; font-size:0.95rem; color:#1E293B;">💾 Fichier de Sauvegarde & Options</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn-primary-cta" style="width:auto; padding:8px 16px; font-size:0.85rem; background:#4F46E5;" onclick="app.exportSaveFile()">
+            📥 Télécharger le fichier (.json)
+          </button>
+          <label class="btn-primary-cta" style="width:auto; padding:8px 16px; font-size:0.85rem; background:#64748B; cursor:pointer;">
+            📂 Charger un fichier
+            <input type="file" id="import-save-file" accept=".json" style="display:none;" onchange="app.importSaveFile(event)">
+          </label>
+          <button class="btn-primary-cta" style="width:auto; padding:8px 16px; font-size:0.85rem; background:#DC2626;" onclick="app.resetProgress()">
+            🔄 Réinitialiser
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==========================================
+         PANEL 3: ADVENTURE MAP
+    =========================================== -->
+    <div class="view-panel" id="panel-adventure">
+      <div class="panel-header-row">
+        <div class="panel-heading">🏰 La Quête des Mondes</div>
+        <div class="badge-pill pill-gold">⭐ <span id="adventure-stars-txt">0</span> / 36</div>
+      </div>
+
+      <!-- World 1 -->
+      <div class="world-block">
+        <div style="display:flex; justify-content:space-between; font-weight:900; font-size:0.95rem; color:#065F46;">
+          <span>🌸 Monde 1 : La Vallée des Additions</span>
+          <span>Tables 1 à 10</span>
+        </div>
+        <div class="levels-grid" id="world-1-nodes"></div>
+      </div>
+
+      <!-- World 2 -->
+      <div class="world-block">
+        <div style="display:flex; justify-content:space-between; font-weight:900; font-size:0.95rem; color:#1E40AF;">
+          <span>⚡ Monde 2 : La Forêt des Multiplications</span>
+          <span>Tables 2 à 10</span>
+        </div>
+        <div class="levels-grid" id="world-2-nodes"></div>
+      </div>
+
+      <!-- World 3 -->
+      <div class="world-block">
+        <div style="display:flex; justify-content:space-between; font-weight:900; font-size:0.95rem; color:#991B1B;">
+          <span>👑 Monde 3 : Le Pic des Sorciers</span>
+          <span>Additions + Multiplications</span>
+        </div>
+        <div class="levels-grid" id="world-3-nodes"></div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         PANEL 4: CALCUL À TROU (MYSTERY)
+    =========================================== -->
+    <div class="view-panel" id="panel-mystery">
+      <div class="panel-header-row">
+        <div class="panel-heading">🔍 Le Nombre Mystère</div>
+        <div></div>
+      </div>
+
+      <p style="font-size:0.9rem; color:#475569;">
+        Trouve le nombre qui se cache derrière le point d'interrogation ! (Exemple : $7 \times \mathbf{?} = 42$)
+      </p>
+
+      <div class="segmented-switch">
+        <button class="switch-option active" id="sw-myst-mult" onclick="app.setMysteryOp('multiplication')">✖ Multiplications</button>
+        <button class="switch-option" id="sw-myst-add" onclick="app.setMysteryOp('addition')">➕ Additions</button>
+        <button class="switch-option" id="sw-myst-mix" onclick="app.setMysteryOp('mix')">🎲 Tout Mélangé</button>
+      </div>
+
+      <button class="btn-primary-cta" style="background:#9333EA; margin-top:8px;" onclick="app.startMysteryGame()">
+        🔎 Lancer l'Enquête des Nombres !
+      </button>
+    </div>
+
+    <!-- ==========================================
+         PANEL 5: MEMORY GAME
+    =========================================== -->
+    <div class="view-panel" id="panel-memory">
+      <div class="panel-header-row">
+        <div class="panel-heading">🃏 Cartes Mémoire des Maths</div>
+        <div style="font-weight:800; color:#059669;" id="memory-pairs-found">Paires : 0 / 6</div>
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <p style="font-size:0.85rem; color:#64748B;">Associe chaque calcul avec son bon résultat (ex : $6 \times 7$ et $42$) :</p>
+        <button class="btn-primary-cta" style="width:auto; padding:6px 14px; font-size:0.82rem; background:#10B981;" onclick="app.initMemoryGame()">
+          🔄 Nouveau Jeu
+        </button>
+      </div>
+
+      <div class="memory-grid" id="memory-cards-grid"></div>
+    </div>
+
+    <!-- ==========================================
+         PANEL 6: CHRONO CONFIG
+    =========================================== -->
+    <div class="view-panel" id="panel-chrono">
+      <div class="panel-header-row">
+        <div class="panel-heading">⚡ Défi Éclair 60 Secondes</div>
+        <div></div>
+      </div>
+
+      <div style="background:#FFF1F2; border:2px dashed #FECDD3; border-radius:18px; padding:18px; text-align:center;">
+        <div style="font-size:1.5rem; margin-bottom:4px;">🏆 Ton Meilleur Record</div>
+        <div style="font-size:2.8rem; font-weight:900; color:#E11D48;" id="chrono-best-txt">0 calculs</div>
+      </div>
+
+      <p style="font-weight:800; color:#475569;">Choisis ton épreuve :</p>
+      <div class="segmented-switch">
+        <button class="switch-option active" id="chrono-sw-mult" onclick="app.setChronoType('multiplication')">✖ Multiplications</button>
+        <button class="switch-option" id="chrono-sw-add" onclick="app.setChronoType('addition')">➕ Additions</button>
+        <button class="switch-option" id="chrono-sw-mix" onclick="app.setChronoType('mix')">🎲 Tout Mélangé</button>
+      </div>
+
+      <button class="btn-primary-cta" style="background:linear-gradient(135deg, #E11D48, #F43F5E); margin-top:10px;" onclick="app.startChronoGame()">
+        ⏱️ Prêt ? Lancer le Chrono !
+      </button>
+    </div>
+
+    <!-- ==========================================
+         PANEL 7: DOJO & TABLE DE PYTHAGORE
+    =========================================== -->
+    <div class="view-panel" id="panel-dojo">
+      <div class="panel-header-row">
+        <div class="panel-heading">🎯 Dojo & Table de Pythagore</div>
+        <div></div>
+      </div>
+
+      <div class="segmented-switch">
+        <button class="switch-option active" id="dojo-sw-mult" onclick="app.setDojoOp('multiplication')">✖ Multiplications</button>
+        <button class="switch-option" id="dojo-sw-add" onclick="app.setDojoOp('addition')">➕ Additions</button>
+      </div>
+
+      <p style="font-weight:800; color:#475569; margin-top:6px;">Choisis les tables à travailler :</p>
+      <div class="table-buttons-grid" id="dojo-tables-buttons"></div>
+
+      <div style="display:flex; gap:10px;">
+        <button style="background:#F1F5F9; border:2px solid #CBD5E1; padding:6px 14px; border-radius:12px; font-weight:800;" onclick="app.selectAllDojo(true)">Tout cocher</button>
+        <button style="background:#F1F5F9; border:2px solid #CBD5E1; padding:6px 14px; border-radius:12px; font-weight:800;" onclick="app.selectAllDojo(false)">Désélectionner</button>
+      </div>
+
+      <button class="btn-primary-cta" style="margin-top:6px;" onclick="app.startDojoGame()">
+        🚀 S'entraîner sur ces tables !
+      </button>
+
+      <!-- Pythagoras Heatmap -->
+      <h3 style="font-size:1rem; font-weight:900; color:#1E293B; margin-top:15px;">📊 Ta Table de Pythagore (Cases maîtrisées en vert)</h3>
+      <div class="pythagoras-table" id="pythagoras-table-grid"></div>
+    </div>
+
+    <!-- ==========================================
+         PANEL 8: COMPAGNON DRAGON & BOUTIQUE
+    =========================================== -->
+    <div class="view-panel" id="panel-pet">
+      <div class="panel-header-row">
+        <div class="panel-heading">🐉 Le Sanctuaire des Dragons</div>
+        <div class="badge-pill pill-gold">⭐ <span id="pet-stars-counter">0</span></div>
+      </div>
+
+      <!-- Choose Pet -->
+      <div class="pet-picker-tabs">
+        <button class="btn-pet-select active" id="btn-pet-flammy" onclick="app.selectCompanion('flammy')">🔥 Flammy (Feu)</button>
+        <button class="btn-pet-select" id="btn-pet-sparky" onclick="app.selectCompanion('sparky')">⚡ Sparky (Foudre)</button>
+        <button class="btn-pet-select" id="btn-pet-aqualy" onclick="app.selectCompanion('aqualy')">🌊 Aqualy (Eau)</button>
+      </div>
+
+      <div class="pet-hero-room">
+        <div style="font-size:1.15rem; font-weight:900; color:#0369A1;">
+          <span id="pet-name-display">Flammy</span> <span id="pet-stage-name-txt">(Bébé Dragon)</span>
+        </div>
+
+        <div class="pet-svg-box" id="pet-svg-full"></div>
+
+        <!-- XP Bar -->
+        <div style="width:100%; max-width:280px;">
+          <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:800; color:#0369A1; margin-bottom:4px;">
+            <span>Évolution</span>
+            <span id="pet-xp-counter-txt">0 / 50 XP</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.7); height:12px; border-radius:8px; overflow:hidden;">
+            <div id="pet-xp-bar-inner" style="width:0%; height:100%; background:linear-gradient(90deg, #F59E0B, #10B981); transition:width 0.3s;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center;">
+          <button class="btn-pet-select" onclick="app.feedCompanion('apple')">🍎 Pomme (+5 XP)</button>
+          <button class="btn-pet-select" onclick="app.feedCompanion('cake')">🍰 Gâteau Magique (+15 XP)</button>
+          <button class="btn-pet-select" onclick="app.petCompanion()">❤️ Caresser</button>
+        </div>
+      </div>
+
+      <h3 style="font-size:1.05rem; font-weight:900; color:#1E293B;">🛍️ Boutique d'Accessoires & Déguisements</h3>
+      <div class="shop-items-grid" id="pet-shop-items-grid"></div>
+    </div>
+
+    <!-- ==========================================
+         PANEL 9: GRIMOIRE & DIPLÔME
+    =========================================== -->
+    <div class="view-panel" id="panel-tips">
+      <div class="panel-header-row">
+        <div class="panel-heading">💡 Le Grimoire des Astuces & Diplôme</div>
+        <div></div>
+      </div>
+
+      <!-- Tip 1 -->
+      <div class="tip-card">
+        <div style="font-weight:900; color:#4F46E5;">🖐️ L'astuce des 10 doigts pour la table de 9</div>
+        <p style="font-size:0.88rem; color:#334155;">
+          Mets tes 10 doigts devant toi. Baisse le doigt du chiffre à multiplier. Les doigts à gauche font les dizaines, les doigts à droite font les unités !
+        </p>
+        <div style="background:#FFFFFF; border-radius:12px; padding:10px; text-align:center;">
+          <div style="font-size:0.82rem; font-weight:800; color:#475569;">Touche un doigt pour tester en direct :</div>
+          <div class="fingers-row" id="interactive-fingers-row"></div>
+          <div id="finger-result-display" style="font-size:1.1rem; font-weight:900; color:#6366F1; margin-top:4px;">
+            Clique sur un doigt ci-dessus !
+          </div>
+        </div>
+      </div>
+
+      <!-- Tip 2 -->
+      <div class="tip-card">
+        <div style="font-weight:900; color:#4F46E5;">🔢 Le secret des chiffres qui se suivent : 5, 6, 7, 8</div>
+        <p style="font-size:0.88rem; color:#334155;">
+          Pour $7 \times 8$, compte : <strong>5, 6, 7, 8</strong> donc <strong>56 = 7 × 8</strong> !
+        </p>
+      </div>
+
+      <!-- Tip 3 -->
+      <div class="tip-card">
+        <div style="font-weight:900; color:#4F46E5;">🐰 Table de 4 : Le Double du Double !</div>
+        <p style="font-size:0.88rem; color:#334155;">
+          Pour faire $4 \times 7$ : le double de 7 = 14, puis le double de 14 = <strong>28</strong> !
+        </p>
+      </div>
+
+      <!-- Printable Diploma -->
+      <div class="diploma-box">
+        <div style="font-size:2.8rem;">📜✨</div>
+        <h2 style="font-size:1.4rem; font-weight:900; color:#B45309;">DIPLÔME OFFICIEL DE MAGICIENNE</h2>
+        <p style="font-size:0.95rem; color:#78350F;">
+          Décerné à l'Apprentie <strong style="font-size:1.15rem; color:#92400E;" id="diploma-name-txt">Léa</strong>
+          pour sa maîtrise étincelante des tables d'addition et de multiplication !
+        </p>
+        <div style="font-size:1.1rem; font-weight:900; color:#D97706;">
+          Étoiles magiques récoltées : <span id="diploma-stars-txt">0</span> ⭐
+        </div>
+        <button class="btn-primary-cta" style="background:#D97706; width:auto; padding:8px 20px; font-size:0.9rem;" onclick="window.print()">
+          🖨️ Imprimer mon Diplôme
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ==========================================
+         PANEL 10: GAMEPLAY ARENA (GAME IN PROGRESS)
+    =========================================== -->
+    <div class="view-panel" id="panel-gameplay">
+      
+      <div class="panel-header-row">
+        <button style="background:#F1F5F9; border:2px solid #CBD5E1; padding:6px 14px; border-radius:12px; font-weight:800;" onclick="app.quitGame()">⬅ Quitter</button>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-val" id="arena-progress-fill"></div>
+        </div>
+        <div class="timer-tag" id="arena-timer-box" style="display:none;">⏱️ <span id="arena-timer-num">60</span>s</div>
+        <div class="badge-pill pill-gold">⭐ <span id="arena-score-val">0</span></div>
+      </div>
+
+      <!-- Boss Banner -->
+      <div class="boss-hud" id="arena-boss-hud" style="display:none;">
+        <div style="text-align:center;">
+          <div style="font-size:2rem;" id="arena-player-avatar-emoji">🐉</div>
+          <div style="font-size:0.72rem; font-weight:800;" id="arena-player-name-tag">Léa</div>
+        </div>
+        <div style="text-align:center; font-weight:900; font-size:0.85rem; color:#FEF08A;">
+          ⚡ COMBAT MAGIQUE ⚡
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:2rem;" id="arena-boss-emoji">🐱</div>
+          <div style="font-size:0.72rem; font-weight:800;" id="arena-boss-name">Grominou</div>
+          <div class="boss-hp-outer">
+            <div class="boss-hp-inner" id="arena-boss-hp-bar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dragon Power (Help Spell) -->
+      <div style="width:100%; display:flex; justify-content:flex-end;">
+        <button class="btn-dragon-power" id="btn-dragon-spell" onclick="app.useDragonSpell()">
+          ✨ Sort d'Aide du Dragon (-2 choix)
+        </button>
+      </div>
+
+      <!-- Formula Display -->
+      <div class="arena-card">
+        <div style="font-size:0.85rem; font-weight:800; color:#6366F1;" id="arena-instruction-txt">QUEL EST LE RÉSULTAT ?</div>
+        
+        <div class="formula-box-row">
+          <span id="arena-num-a">7</span>
+          <span class="formula-op" id="arena-op-symbol">×</span>
+          <span id="arena-num-b">8</span>
+          <span class="formula-op">=</span>
+          <span class="formula-target-slot" id="arena-target-box">?</span>
+        </div>
+
+        <!-- 4 Answer Buttons -->
+        <div class="answers-box">
+          <button class="btn-choice" id="choice-btn-0" onclick="app.handleAnswerClick(0)">--</button>
+          <button class="btn-choice" id="choice-btn-1" onclick="app.handleAnswerClick(1)">--</button>
+          <button class="btn-choice" id="choice-btn-2" onclick="app.handleAnswerClick(2)">--</button>
+          <button class="btn-choice" id="choice-btn-3" onclick="app.handleAnswerClick(3)">--</button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- End Level Modal -->
+  <div class="modal-overlay" id="end-level-modal">
+    <div class="modal-card">
+      <div style="font-size:3.5rem;" id="modal-emoji-icon">🎉</div>
+      <h2 style="font-size:1.45rem; font-weight:900; color:#1E293B;" id="modal-heading">Niveau Réussi !</h2>
+      <p style="font-size:0.9rem; color:#64748B;" id="modal-description">Bravo pour cette magnifique partie !</p>
+
+      <div style="display:flex; justify-content:space-around; background:#F8FAFC; border-radius:16px; padding:12px;">
+        <div>
+          <div style="font-size:1.4rem; font-weight:900; color:#6366F1;" id="modal-score-stat">10/10</div>
+          <div style="font-size:0.75rem; font-weight:800; color:#94A3B8;">RÉSULTAT</div>
+        </div>
+        <div>
+          <div style="font-size:1.4rem; font-weight:900; color:#F59E0B;" id="modal-stars-stat">+15 ⭐</div>
+          <div style="font-size:0.75rem; font-weight:800; color:#94A3B8;">ÉTOILES</div>
+        </div>
+        <div>
+          <div style="font-size:1.4rem; font-weight:900; color:#E11D48;" id="modal-streak-stat">🔥 5</div>
+          <div style="font-size:0.75rem; font-weight:800; color:#94A3B8;">MAX COMBO</div>
+        </div>
+      </div>
+
+      <button class="btn-primary-cta" onclick="app.closeEndModal()">Continuer ➔</button>
+    </div>
+  </div>
+
+  <!-- Database SQL Modal -->
+  <div class="modal-overlay" id="database-sql-modal">
+    <div class="modal-card" style="max-width:480px;">
+      <div style="font-size:3.2rem;">🗄️✨</div>
+      <h2 style="font-size:1.4rem; font-weight:900; color:#065F46;">Base de Données Relationnelle SQL</h2>
+      <p style="font-size:0.85rem; color:#475569;">
+        Toutes les parties sont stockées dans les tables SQLite (<code>database.sqlite</code>).
+      </p>
+
+      <div style="background:#ECFDF5; border:2px dashed #059669; border-radius:14px; padding:12px; text-align:left;">
+        <div style="font-size:0.75rem; font-weight:800; color:#047857;">TON CODE JOUEUR SQL :</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px;">
+          <div style="font-size:1.5rem; font-weight:900; color:#065F46;" id="modal-sql-code-txt">MAGIE-784</div>
+          <button class="btn-primary-cta" style="width:auto; padding:6px 12px; font-size:0.82rem; background:#059669;" onclick="app.copySqlCode()">
+            📋 Copier
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button class="btn-primary-cta" style="background:#059669;" onclick="app.saveToDatabase()">
+          💾 Sauvegarder dans SQLite Maintenant
+        </button>
+      </div>
+
+      <div style="border-top:1px dashed #CBD5E1; padding-top:10px;">
+        <div style="font-size:0.85rem; font-weight:800; color:#475569; margin-bottom:6px;">Charger une partie depuis la base SQL :</div>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="modal-input-sql-code" class="name-input-field" placeholder="Ex: MAGIE-784" style="text-transform:uppercase; font-size:0.95rem; padding:8px 12px;">
+          <button class="btn-primary-cta" style="width:auto; padding:8px 16px; font-size:0.88rem; background:#047857;" onclick="app.loadFromDatabaseModal()">
+            📥 Charger
+          </button>
+        </div>
+      </div>
+
+      <div id="modal-db-stats-view" style="font-size:0.8rem; color:#64748B; text-align:center; margin-top:4px;">
+        <!-- Filled by JS -->
+      </div>
+
+      <button class="btn-primary-cta" style="background:#64748B;" onclick="app.closeDatabaseModal()">
+        Fermer
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast-popup" id="toast-banner">Message</div>
+
+  <!-- Main Game Script -->
+  <script>
+    /* ==========================================================
+       CONFETTI CANVAS
+    ========================================================== */
+    class Confetti {
+      constructor() {
+        this.canvas = document.getElementById('confetti-canvas');
+        this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
+        this.particles = [];
+        if (this.canvas) {
+          this.resize();
+          window.addEventListener('resize', () => this.resize());
+          this.loop();
+        }
+      }
+      resize() {
+        if (!this.canvas) return;
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+      }
+      burst(x = window.innerWidth / 2, y = window.innerHeight / 2, count = 35) {
+        if (!this.canvas) return;
+        const colors = ['#6366F1', '#EC4899', '#F59E0B', '#10B981', '#06B6D4', '#F43F5E'];
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 8 + 3;
+          this.particles.push({
+            x, y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 3,
+            size: Math.random() * 7 + 4,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            life: 1,
+            decay: Math.random() * 0.02 + 0.015
+          });
+        }
+      }
+      loop() {
+        if (!this.ctx) return;
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.22;
+          p.life -= p.decay;
+          if (p.life <= 0) {
+            this.particles.splice(i, 1);
+            continue;
+          }
+          this.ctx.save();
+          this.ctx.globalAlpha = p.life;
+          this.ctx.fillStyle = p.color;
+          this.ctx.beginPath();
+          this.ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+          this.ctx.fill();
+          this.ctx.restore();
+        }
+        requestAnimationFrame(() => this.loop());
+      }
+    }
+    const confetti = new Confetti();
+
+    /* ==========================================================
+       SYNTHESIZED WEB AUDIO
+    ========================================================== */
+    class AudioSynth {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+      init() {
+        try {
+          if (!this.ctx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (AC) this.ctx = new AC();
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+        } catch(e) {}
+      }
+      toggle() {
+        this.enabled = !this.enabled;
+        const b = document.getElementById('btn-sound-toggle');
+        if (b) b.innerText = this.enabled ? '🔊' : '🔇';
+      }
+      playNote(f, dur = 0.1, delay = 0, type = 'triangle') {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        setTimeout(() => {
+          try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(f, this.ctx.currentTime);
+            gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + dur);
+          } catch(e) {}
+        }, delay * 1000);
+      }
+      correct(streak = 1) {
+        const base = 523.25;
+        const pitchMultiplier = Math.min(1.8, 1 + (streak * 0.08));
+        this.playNote(base * pitchMultiplier, 0.08, 0);
+        this.playNote(base * pitchMultiplier * 1.25, 0.08, 0.06);
+        this.playNote(base * pitchMultiplier * 1.5, 0.15, 0.12);
+      }
+      wrong() {
+        this.playNote(260, 0.12, 0, 'sawtooth');
+        this.playNote(190, 0.2, 0.08, 'sawtooth');
+      }
+      fanfare() {
+        [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50].forEach((n, i) => this.playNote(n, 0.2, i * 0.08));
+      }
+      spell() {
+        [800, 1000, 1200, 1400, 1600].forEach((n, i) => this.playNote(n, 0.1, i * 0.05, 'sine'));
+      }
+    }
+    const audio = new AudioSynth();
+
+    /* ==========================================================
+       SVG DRAGON PET GENERATOR
+    ========================================================== */
+    function buildPetSVG(petType = 'flammy', stage = 1, acc = 'none') {
+      const colorThemes = {
+        flammy: { start: '#FB7185', end: '#E11D48', belly: '#FEF08A', wing: '#F43F5E' },
+        sparky: { start: '#FDE047', end: '#EAB308', belly: '#FEF9C3', wing: '#F59E0B' },
+        aqualy: { start: '#38BDF8', end: '#0284C7', belly: '#E0F2FE', wing: '#06B6D4' }
+      };
+      const theme = colorThemes[petType] || colorThemes.flammy;
+
+      const hats = {
+        none: '',
+        wizard: `<polygon points="50,15 35,45 65,45" fill="#6366F1" stroke="#4338CA" stroke-width="2"/>
+                 <ellipse cx="50" cy="45" rx="20" ry="5" fill="#4F46E5"/>
+                 <polygon points="50,22 52,26 56,26 53,29 54,33 50,30 46,33 47,29 44,26 48,26" fill="#F59E0B"/>`,
+        crown: `<polygon points="36,44 40,25 50,35 60,25 64,44" fill="#F59E0B" stroke="#D97706" stroke-width="1.5"/>
+                <circle cx="40" cy="24" r="2" fill="#EF4444"/><circle cx="50" cy="34" r="2" fill="#3B82F6"/><circle cx="60" cy="24" r="2" fill="#10B981"/>`,
+        glasses: `<rect x="36" y="48" width="12" height="10" rx="3" fill="#1E293B" stroke="#F59E0B" stroke-width="1.5"/>
+                  <rect x="52" y="48" width="12" height="10" rx="3" fill="#1E293B" stroke="#F59E0B" stroke-width="1.5"/>
+                  <line x1="48" y1="52" x2="52" y2="52" stroke="#F59E0B" stroke-width="2"/>`,
+        flower: `<circle cx="62" cy="40" r="5" fill="#EC4899"/><circle cx="59" cy="36" r="3" fill="#F472B6"/><circle cx="65" cy="36" r="3" fill="#F472B6"/><circle cx="62" cy="40" r="2" fill="#FDE047"/>`
+      };
+
+      const wings = stage >= 2 ? `
+        <path d="M22,55 Q5,35 15,65 Q20,68 25,62 Z" fill="${theme.wing}" opacity="0.9"/>
+        <path d="M78,55 Q95,35 85,65 Q80,68 75,62 Z" fill="${theme.wing}" opacity="0.9"/>
+      ` : '';
+
+      const horns = stage >= 3 ? `
+        <path d="M35,38 Q30,20 25,22 Q32,32 37,42 Z" fill="#F59E0B"/>
+        <path d="M65,38 Q70,20 75,22 Q68,32 63,42 Z" fill="#F59E0B"/>
+      ` : `
+        <polygon points="38,40 33,32 41,36" fill="#FBBF24"/>
+        <polygon points="62,40 67,32 59,36" fill="#FBBF24"/>
+      `;
+
+      return `
+        <svg viewBox="0 0 100 100" width="100%" height="100%" style="overflow:visible;">
+          <defs>
+            <radialGradient id="bodyGrad_${petType}" cx="40%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="${theme.start}"/>
+              <stop offset="100%" stop-color="${theme.end}"/>
+            </radialGradient>
+          </defs>
+          ${wings}
+          <path d="M32,75 Q15,85 10,75 Q12,70 28,70 Z" fill="${theme.end}"/>
+          <polygon points="10,75 6,70 14,70" fill="#F59E0B"/>
+          <ellipse cx="50" cy="65" rx="25" ry="22" fill="url(#bodyGrad_${petType})"/>
+          <ellipse cx="50" cy="68" rx="15" ry="14" fill="${theme.belly}"/>
+          ${horns}
+          <circle cx="50" cy="48" r="20" fill="url(#bodyGrad_${petType})"/>
+          <ellipse cx="38" cy="54" rx="4" ry="2.5" fill="#FDA4AF"/>
+          <ellipse cx="62" cy="54" rx="4" ry="2.5" fill="#FDA4AF"/>
+          <circle cx="43" cy="46" r="4.5" fill="#1E293B"/>
+          <circle cx="57" cy="46" r="4.5" fill="#1E293B"/>
+          <circle cx="44.5" cy="44.5" r="1.5" fill="white"/>
+          <circle cx="58.5" cy="44.5" r="1.5" fill="white"/>
+          <ellipse cx="50" cy="54" rx="6" ry="4" fill="#FDA4AF"/>
+          <path d="M48,53 Q50,56 52,53" stroke="#881337" stroke-width="1.2" fill="none"/>
+          ${hats[acc] || ''}
+        </svg>
+      `;
+    }
+
+    /* ==========================================================
+       MAIN GAME APPLICATION WITH SQLITE DATABASE & PROFILE
+    ========================================================== */
+    class MathQuestApp {
+      constructor() {
+        this.STORAGE_KEY = 'math_quest_player_save_v6';
+
+        // Avatar gallery
+        this.avatarList = [
+          { id: 'witch', emoji: '🧙‍♀️', name: 'Magicienne' },
+          { id: 'wizard', emoji: '🧙‍♂️', name: 'Magicien' },
+          { id: 'unicorn', emoji: '🦄', name: 'Licorne' },
+          { id: 'cat', emoji: '🐱', name: 'Chaton' },
+          { id: 'fox', emoji: '🦊', name: 'Renard' },
+          { id: 'panda', emoji: '🐼', name: 'Panda' },
+          { id: 'robot', emoji: '🤖', name: 'Robot' },
+          { id: 'princess', emoji: '👑', name: 'Princesse' },
+          { id: 'hero', emoji: '🦸‍♀️', name: 'Héroïne' },
+          { id: 'dragon', emoji: '🐲', name: 'Dragonnier' }
+        ];
+
+        this.sqlCode = this.generateRandomCode();
+        this.loadLocalSave();
+
+        // Configs
+        this.dojoOp = 'multiplication';
+        this.dojoTables = [2, 3, 4, 5];
+        this.chronoType = 'multiplication';
+        this.mysteryOp = 'multiplication';
+
+        // Gameplay state
+        this.activeMode = 'quick';
+        this.questions = [];
+        this.qIndex = 0;
+        this.score = 0;
+        this.streak = 0;
+        this.maxStreakInRound = 0;
+        this.timer = null;
+        this.timeLeft = 60;
+        this.dragonSpellUsed = false;
+        this.currentLvl = 1;
+
+        // Memory game state
+        this.memoryCards = [];
+        this.memoryFlipped = [];
+        this.memoryPairsFound = 0;
+
+        this.init();
+      }
+
+      generateRandomCode() {
+        const words = ['MAGIE', 'DRAGON', 'ETOILE', 'ECLAIR', 'SOLEIL', 'LUNE', 'SUPER', 'ROYAL'];
+        return `${words[Math.floor(Math.random() * words.length)]}-${Math.floor(Math.random() * 899 + 100)}`;
+      }
+
+      loadLocalSave() {
+        let saved = null;
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            saved = window.localStorage.getItem(this.STORAGE_KEY);
+          }
+        } catch(e) {}
+
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            this.playerName = data.playerName || 'Léa';
+            this.avatar = data.avatar || '🧙‍♀️';
+            this.stars = data.stars || 25;
+            this.streakRecord = data.streakRecord || 0;
+            this.chronoRecord = data.chronoRecord || 0;
+            this.sqlCode = data.sqlCode || this.sqlCode;
+            this.currentPetType = data.currentPetType || 'flammy';
+            this.pets = data.pets || this.defaultPets();
+            this.levels = data.levels || { 1: { completed: false, stars: 0 } };
+            this.masteredMultiplications = data.masteredMultiplications || {};
+            return;
+          } catch(e) {}
+        }
+
+        this.playerName = 'Léa';
+        this.avatar = '🧙‍♀️';
+        this.stars = 25;
+        this.streakRecord = 0;
+        this.chronoRecord = 0;
+        this.currentPetType = 'flammy';
+        this.pets = this.defaultPets();
+        this.levels = { 1: { completed: false, stars: 0 } };
+        this.masteredMultiplications = {};
+      }
+
+      defaultPets() {
+        return {
+          flammy: { name: 'Flammy', stage: 1, xp: 15, acc: 'none', owned: ['none'] },
+          sparky: { name: 'Sparky', stage: 1, xp: 0, acc: 'none', owned: ['none'] },
+          aqualy: { name: 'Aqualy', stage: 1, xp: 0, acc: 'none', owned: ['none'] }
+        };
+      }
+
+      getPayload() {
+        return {
+          playerName: this.playerName,
+          avatar: this.avatar,
+          stars: this.stars,
+          streakRecord: this.streakRecord,
+          chronoRecord: this.chronoRecord,
+          sqlCode: this.sqlCode,
+          currentPetType: this.currentPetType,
+          pets: this.pets,
+          levels: this.levels,
+          masteredMultiplications: this.masteredMultiplications,
+          savedAt: new Date().toISOString()
+        };
+      }
+
+      saveProgress() {
+        const payload = this.getPayload();
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.setItem(this.STORAGE_KEY, JSON.stringify(payload));
+          }
+        } catch(e) {}
+
+        this.updateHeader();
+        this.syncDatabaseSilent();
+      }
+
+      /* ================= SQLITE DATABASE OPERATIONS ================= */
+      async syncDatabaseSilent() {
+        try {
+          const payload = this.getPayload();
+          await fetch('/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: this.sqlCode, data: payload })
+          });
+        } catch(e) {}
+      }
+
+      openDatabaseModal() {
+        const modal = document.getElementById('database-sql-modal');
+        const codeTxt = document.getElementById('modal-sql-code-txt');
+        if (codeTxt) codeTxt.innerText = this.sqlCode;
+        if (modal) modal.classList.add('active');
+        this.fetchDatabaseStats();
+      }
+
+      closeDatabaseModal() {
+        const modal = document.getElementById('database-sql-modal');
+        if (modal) modal.classList.remove('active');
+      }
+
+      async fetchDatabaseStats() {
+        const view = document.getElementById('modal-db-stats-view');
+        try {
+          const resp = await fetch('/api/db/stats');
+          const json = await resp.json();
+          if (json.success && view) {
+            view.innerHTML = `
+              <div style="font-weight:800; color:#065F46; margin-bottom:4px;">
+                📊 Base SQL : <strong>${json.total_players}</strong> joueur(s) enregistré(s) dans <code>${json.db_file}</code>
+              </div>
+            `;
+          }
+        } catch(e) {}
+      }
+
+      async saveToDatabase() {
+        try {
+          const payload = this.getPayload();
+          const resp = await fetch('/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: this.sqlCode, data: payload })
+          });
+          const json = await resp.json();
+          if (json.success) {
+            this.sqlCode = json.code || this.sqlCode;
+            this.saveProgress();
+            this.updateHeader();
+            audio.fanfare();
+            confetti.burst(window.innerWidth / 2, window.innerHeight * 0.4, 35);
+            this.showToast(`💾 Enregistré dans la Base SQLite (Code: ${this.sqlCode}) !`);
+            this.fetchDatabaseStats();
+          } else {
+            this.showToast("Erreur lors de l'enregistrement dans la base SQL.");
+          }
+        } catch(err) {
+          this.showToast("Sauvegarde enregistrée localement !");
+        }
+      }
+
+      async loadFromDatabaseModal() {
+        const input = document.getElementById('modal-input-sql-code');
+        const code = (input ? input.value : '').trim().toUpperCase();
+        if (!code) {
+          this.showToast("Veuillez entrer un code joueur SQL !");
+          return;
+        }
+        await this.performDatabaseLoad(code);
+      }
+
+      async loadFromDatabase() {
+        const input = document.getElementById('input-sql-code-load');
+        const code = (input ? input.value : '').trim().toUpperCase();
+        if (!code) {
+          this.showToast("Veuillez entrer un code joueur SQL !");
+          return;
+        }
+        await this.performDatabaseLoad(code);
+      }
+
+      async performDatabaseLoad(code) {
+        try {
+          const resp = await fetch(`/api/load?code=${encodeURIComponent(code)}`);
+          const json = await resp.json();
+          if (json.success && json.data) {
+            const d = json.data;
+            if (d.playerName) this.playerName = d.playerName;
+            if (d.avatar) this.avatar = d.avatar;
+            if (d.stars !== undefined) this.stars = d.stars;
+            if (d.streakRecord !== undefined) this.streakRecord = d.streakRecord;
+            if (d.chronoRecord !== undefined) this.chronoRecord = d.chronoRecord;
+            if (d.currentPetType) this.currentPetType = d.currentPetType;
+            if (d.pets) this.pets = d.pets;
+            if (d.levels) this.levels = d.levels;
+            if (d.masteredMultiplications) this.masteredMultiplications = d.masteredMultiplications;
+            this.sqlCode = code;
+
+            this.saveProgress();
+            this.init();
+            this.closeDatabaseModal();
+            audio.fanfare();
+            confetti.burst(window.innerWidth / 2, window.innerHeight / 2, 60);
+            this.showToast(`🎉 Partie de ${this.playerName} restaurée depuis la Base SQL !`);
+          } else {
+            this.showToast("❌ Code introuvable dans la base SQL !");
+          }
+        } catch(err) {
+          this.showToast("Impossible d'accéder à la base de données SQL.");
+        }
+      }
+
+      copySqlCode() {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(this.sqlCode);
+          this.showToast(`Code SQL ${this.sqlCode} copié ! 📋`);
+        } else {
+          prompt("Voici ton code SQL à copier :", this.sqlCode);
+        }
+      }
+
+      exportSaveFile() {
+        const payload = this.getPayload();
+        const str = JSON.stringify(payload, null, 2);
+        const blob = new Blob([str], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sauvegarde_maths_${this.playerName}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.showToast("Fichier de sauvegarde téléchargé ! 💾");
+      }
+
+      importSaveFile(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const data = JSON.parse(e.target.result);
+            if (data.playerName) this.playerName = data.playerName;
+            if (data.avatar) this.avatar = data.avatar;
+            if (data.stars !== undefined) this.stars = data.stars;
+            if (data.streakRecord !== undefined) this.streakRecord = data.streakRecord;
+            if (data.chronoRecord !== undefined) this.chronoRecord = data.chronoRecord;
+            if (data.sqlCode) this.sqlCode = data.sqlCode;
+            if (data.currentPetType) this.currentPetType = data.currentPetType;
+            if (data.pets) this.pets = data.pets;
+            if (data.levels) this.levels = data.levels;
+            if (data.masteredMultiplications) this.masteredMultiplications = data.masteredMultiplications;
+
+            this.saveProgress();
+            this.init();
+            audio.fanfare();
+            confetti.burst(window.innerWidth / 2, window.innerHeight / 2, 50);
+            this.showToast(`Bienvenue de retour, ${this.playerName} ! Sauvegarde restaurée ! 🎉`);
+          } catch(err) {
+            this.showToast("Erreur lors de la lecture du fichier de sauvegarde !");
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      resetProgress() {
+        const ok = confirm("Veux-tu vraiment recommencer à zéro ? (Toutes les étoiles seront réinitialisées)");
+        if (ok) {
+          this.playerName = 'Léa';
+          this.avatar = '🧙‍♀️';
+          this.stars = 10;
+          this.streakRecord = 0;
+          this.chronoRecord = 0;
+          this.sqlCode = this.generateRandomCode();
+          this.currentPetType = 'flammy';
+          this.pets = this.defaultPets();
+          this.levels = { 1: { completed: false, stars: 0 } };
+          this.masteredMultiplications = {};
+          this.saveProgress();
+          this.init();
+          this.showToast("Jeu réinitialisé !");
+        }
+      }
+
+      init() {
+        this.updateHeader();
+        this.renderAvatarPicker();
+        this.renderAdventureMap();
+        this.renderDojoTables();
+        this.renderPythagoras();
+        this.renderPetScreen();
+        this.renderFingersTool();
+        this.renderPet();
+
+        const nameInput = document.getElementById('input-player-name');
+        if (nameInput) nameInput.value = this.playerName;
+
+        const codeDisp = document.getElementById('display-sql-code');
+        if (codeDisp) codeDisp.innerText = this.sqlCode;
+
+        const homeCode = document.getElementById('home-db-code-tag');
+        if (homeCode) homeCode.innerText = this.sqlCode;
+
+        const modalCode = document.getElementById('modal-sql-code-txt');
+        if (modalCode) modalCode.innerText = this.sqlCode;
+      }
+
+      updateHeader() {
+        const s = document.getElementById('stat-stars');
+        const st = document.getElementById('stat-streak');
+        const nameEl = document.getElementById('player-display-name');
+        const avatarIcon = document.getElementById('header-avatar-icon');
+        const homeWelcome = document.getElementById('home-welcome-title');
+        const dipName = document.getElementById('diploma-name-txt');
+        const dipStars = document.getElementById('diploma-stars-txt');
+        const codeDisp = document.getElementById('display-sql-code');
+        const homeCode = document.getElementById('home-db-code-tag');
+        const modalCode = document.getElementById('modal-sql-code-txt');
+
+        if (s) s.innerText = this.stars;
+        if (st) st.innerText = this.streakRecord;
+        if (nameEl) nameEl.innerText = `${this.playerName} ✨`;
+        if (avatarIcon) avatarIcon.innerText = this.avatar;
+        if (homeWelcome) homeWelcome.innerText = `Bienvenue ${this.playerName} ! ${this.avatar}`;
+        if (dipName) dipName.innerText = this.playerName;
+        if (dipStars) dipStars.innerText = this.stars;
+        if (codeDisp) codeDisp.innerText = this.sqlCode;
+        if (homeCode) homeCode.innerText = this.sqlCode;
+        if (modalCode) modalCode.innerText = this.sqlCode;
+      }
+
+      /* ================= AVATAR & NAME PROFILE ================= */
+      renderAvatarPicker() {
+        const grid = document.getElementById('avatar-picker-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        this.avatarList.forEach(av => {
+          const btn = document.createElement('button');
+          btn.className = `avatar-choice-btn ${this.avatar === av.emoji ? 'selected' : ''}`;
+          btn.innerHTML = `
+            <div>${av.emoji}</div>
+            <div class="avatar-choice-lbl">${av.name}</div>
+          `;
+          btn.onclick = () => {
+            this.avatar = av.emoji;
+            this.saveProgress();
+            this.renderAvatarPicker();
+            audio.spell();
+            confetti.burst(window.innerWidth / 2, window.innerHeight * 0.4, 20);
+            this.showToast(`Nouvel avatar choisi : ${av.name} ${av.emoji} !`);
+          };
+          grid.appendChild(btn);
+        });
+      }
+
+      saveProfileName() {
+        const input = document.getElementById('input-player-name');
+        if (input && input.value.trim()) {
+          this.playerName = input.value.trim();
+          this.saveProgress();
+          audio.fanfare();
+          confetti.burst(window.innerWidth / 2, window.innerHeight * 0.4, 25);
+          this.showToast(`Enchanté, magicienne ${this.playerName} ! Profil sauvegardé ! ✨`);
+        }
+      }
+
+      showToast(msg) {
+        const t = document.getElementById('toast-banner');
+        if (!t) return;
+        t.innerText = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2200);
+      }
+
+      switchTab(tabId) {
+        if (this.timer) clearInterval(this.timer);
+
+        document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
+
+        const panel = document.getElementById(`panel-${tabId}`);
+        const tabBtn = document.getElementById(`tab-${tabId}`);
+
+        if (panel) panel.classList.add('active');
+        if (tabBtn) tabBtn.classList.add('active');
+
+        if (tabId === 'adventure') this.renderAdventureMap();
+        if (tabId === 'pet') this.renderPetScreen();
+        if (tabId === 'memory') this.initMemoryGame();
+        if (tabId === 'dojo') this.renderPythagoras();
+        if (tabId === 'profile') this.renderAvatarPicker();
+        if (tabId === 'chrono') {
+          const rec = document.getElementById('chrono-best-txt');
+          if (rec) rec.innerText = `${this.chronoRecord} calculs`;
+        }
+      }
+
+      toggleSound() {
+        audio.toggle();
+      }
+
+      /* ================= PET RENDERING ================= */
+      renderPet() {
+        const p = this.pets[this.currentPetType];
+        const svg = buildPetSVG(this.currentPetType, p.stage, p.acc);
+        const hero = document.getElementById('hero-pet-svg');
+        if (hero) hero.innerHTML = svg;
+      }
+
+      renderPetScreen() {
+        const p = this.pets[this.currentPetType];
+        const svg = buildPetSVG(this.currentPetType, p.stage, p.acc);
+        const full = document.getElementById('pet-svg-full');
+        if (full) full.innerHTML = svg;
+
+        const starsEl = document.getElementById('pet-stars-counter');
+        if (starsEl) starsEl.innerText = this.stars;
+
+        const maxXP = p.stage === 1 ? 50 : (p.stage === 2 ? 150 : 300);
+        const curr = p.xp;
+        const pct = Math.min(100, (curr / maxXP) * 100);
+
+        document.getElementById('pet-xp-counter-txt').innerText = `${curr} / ${maxXP} XP`;
+        document.getElementById('pet-xp-bar-inner').style.width = `${pct}%`;
+
+        const stageNames = { 1: '(Bébé Dragonceau)', 2: '(Dragon Ailé)', 3: '(Dragon Suprême)' };
+        document.getElementById('pet-name-display').innerText = p.name;
+        document.getElementById('pet-stage-name-txt').innerText = stageNames[p.stage] || '';
+
+        // Shop items
+        const shop = document.getElementById('pet-shop-items-grid');
+        const items = [
+          { id: 'wizard', name: 'Chapeau Sorcier', icon: '🧙', price: 20 },
+          { id: 'crown', name: 'Couronne Royale', icon: '👑', price: 40 },
+          { id: 'glasses', name: 'Lunettes Cool', icon: '🕶️', price: 25 },
+          { id: 'flower', name: 'Fleur Magique', icon: '🌸', price: 15 }
+        ];
+
+        shop.innerHTML = items.map(it => {
+          const owned = p.owned.includes(it.id);
+          const equipped = p.acc === it.id;
+          let btnTxt = `Acheter (${it.price} ⭐)`;
+          let btnCls = 'shop-btn';
+          if (equipped) { btnTxt = '✓ Porté'; btnCls += ' equipped'; }
+          else if (owned) { btnTxt = 'Mettre'; btnCls += ' owned'; }
+
+          return `
+            <div class="shop-card">
+              <div style="font-size:2rem;">${it.icon}</div>
+              <div style="font-weight:800; font-size:0.88rem;">${it.name}</div>
+              <div style="font-weight:900; color:#D97706; font-size:0.85rem;">⭐ ${it.price}</div>
+              <button class="${btnCls}" onclick="app.buyPetAccessory('${it.id}', ${it.price})">${btnTxt}</button>
+            </div>
+          `;
+        }).join('');
+      }
+
+      selectCompanion(type) {
+        this.currentPetType = type;
+        document.querySelectorAll('.btn-pet-select').forEach(b => b.classList.remove('active'));
+        const btn = document.getElementById(`btn-pet-${type}`);
+        if (btn) btn.classList.add('active');
+        this.saveProgress();
+        this.renderPetScreen();
+        this.renderPet();
+        this.showToast(`Tu as choisi ${this.pets[type].name} ! 🐾`);
+      }
+
+      buyPetAccessory(id, price) {
+        const p = this.pets[this.currentPetType];
+        if (p.owned.includes(id)) {
+          p.acc = (p.acc === id) ? 'none' : id;
+          this.saveProgress();
+          this.renderPetScreen();
+          this.renderPet();
+        } else {
+          if (this.stars >= price) {
+            this.stars -= price;
+            p.owned.push(id);
+            p.acc = id;
+            audio.fanfare();
+            confetti.burst(window.innerWidth / 2, window.innerHeight / 2, 35);
+            this.saveProgress();
+            this.renderPetScreen();
+            this.renderPet();
+            this.showToast("Superbe accessoire acheté ! ✨");
+          } else {
+            this.showToast("Il te manque des étoiles ! Fais quelques calculs pour en gagner ! ⭐");
+          }
+        }
+      }
+
+      feedCompanion(type) {
+        const gain = type === 'apple' ? 5 : 15;
+        const p = this.pets[this.currentPetType];
+        p.xp += gain;
+        this.checkPetEvolution(p);
+        this.saveProgress();
+        this.renderPetScreen();
+        this.showToast(type === 'apple' ? "Miam ! +5 XP !" : "Délicieux gâteau magique +15 XP !");
+      }
+
+      petCompanion() {
+        const p = this.pets[this.currentPetType];
+        const quotes = [
+          `${p.name} ronronne de joie ! ❤️`,
+          `${p.name} adore quand tu fais des maths ! ✨`,
+          `${p.name} se sent surpuissant à tes côtés !`
+        ];
+        this.showToast(quotes[Math.floor(Math.random() * quotes.length)]);
+      }
+
+      checkPetEvolution(p) {
+        if (p.stage === 1 && p.xp >= 50) {
+          p.stage = 2;
+          audio.fanfare();
+          confetti.burst(window.innerWidth / 2, window.innerHeight / 2, 45);
+          this.showToast(`🎉 INCROYABLE ! ${p.name} a grandi et a désormais des ailes ! 🐉`);
+        } else if (p.stage === 2 && p.xp >= 150) {
+          p.stage = 3;
+          audio.fanfare();
+          confetti.burst(window.innerWidth / 2, window.innerHeight / 2, 60);
+          this.showToast(`👑 LÉGENDAIRE ! ${p.name} est devenu un Dragon Suprême ! 🌟`);
+        }
+        this.renderPet();
+      }
+
+      /* ================= ADVENTURE MODE ================= */
+      renderAdventureMap() {
+        let sum = 0;
+        for (let i = 1; i <= 12; i++) {
+          if (this.levels[i]) sum += (this.levels[i].stars || 0);
+        }
+        const ast = document.getElementById('adventure-stars-txt');
+        if (ast) ast.innerText = sum;
+
+        const w1 = document.getElementById('world-1-nodes');
+        const w2 = document.getElementById('world-2-nodes');
+        const w3 = document.getElementById('world-3-nodes');
+
+        if (w1) w1.innerHTML = this.buildLevelCards([
+          { id: 1, name: 'Tables 1, 2, 3', type: 'norm' },
+          { id: 2, name: 'Tables 4, 5, 6', type: 'norm' },
+          { id: 3, name: 'Tables 7, 8, 9', type: 'norm' },
+          { id: 4, name: 'Boss Grominou', type: 'boss', emoji: '🐱' }
+        ]);
+
+        if (w2) w2.innerHTML = this.buildLevelCards([
+          { id: 5, name: 'Tables 2, 5, 10', type: 'norm' },
+          { id: 6, name: 'Tables 3, 4', type: 'norm' },
+          { id: 7, name: 'Tables 6, 7, 8, 9', type: 'norm' },
+          { id: 8, name: 'Boss Draco', type: 'boss', emoji: '🦖' }
+        ]);
+
+        if (w3) w3.innerHTML = this.buildLevelCards([
+          { id: 9, name: 'Défi Mixtes', type: 'norm' },
+          { id: 10, name: 'Carrés & Doubles', type: 'norm' },
+          { id: 11, name: 'Grand Tournoi', type: 'norm' },
+          { id: 12, name: 'Grand Sorcier', type: 'boss', emoji: '🧙‍♂️' }
+        ]);
+      }
+
+      buildLevelCards(list) {
+        return list.map(item => {
+          const lData = this.levels[item.id] || { completed: false, stars: 0 };
+          const isUnlocked = item.id === 1 || (this.levels[item.id - 1] && this.levels[item.id - 1].completed);
+          
+          let starsStr = '';
+          if (lData.stars > 0) starsStr = '⭐'.repeat(lData.stars);
+          else if (isUnlocked) starsStr = '☆☆☆';
+
+          const cls = [
+            'btn-level',
+            isUnlocked ? 'unlocked' : 'locked',
+            lData.completed ? 'completed' : '',
+            item.type === 'boss' ? 'boss-node' : ''
+          ].join(' ');
+
+          const icon = item.type === 'boss' ? item.emoji : item.id;
+
+          return `
+            <button class="${cls}" onclick="app.startAdventureLevel(${item.id}, ${isUnlocked})">
+              <div style="font-size:1.3rem; font-weight:900;">${icon}</div>
+              <div style="font-size:0.75rem; color:#F59E0B;">${starsStr}</div>
+              <div style="font-size:0.72rem; font-weight:800; color:#475569;">${item.name}</div>
+            </button>
+          `;
+        }).join('');
+      }
+
+      startAdventureLevel(id, unlocked) {
+        if (!unlocked) {
+          this.showToast("Ce niveau est verrouillé ! Réussis le niveau précédent ! 🗝️");
+          return;
+        }
+        this.activeMode = 'adventure';
+        this.currentLvl = id;
+        const isBoss = (id === 4 || id === 8 || id === 12);
+        const count = isBoss ? 8 : 6;
+
+        let q = [];
+        if (id === 1) q = this.genQuestions('addition', [1, 2, 3], count);
+        else if (id === 2) q = this.genQuestions('addition', [4, 5, 6], count);
+        else if (id === 3) q = this.genQuestions('addition', [7, 8, 9, 10], count);
+        else if (id === 4) q = this.genQuestions('addition', [1,2,3,4,5,6,7,8,9,10], count);
+        else if (id === 5) q = this.genQuestions('multiplication', [2, 5, 10], count);
+        else if (id === 6) q = this.genQuestions('multiplication', [3, 4], count);
+        else if (id === 7) q = this.genQuestions('multiplication', [6, 7, 8, 9], count);
+        else if (id === 8) q = this.genQuestions('multiplication', [2,3,4,5,6,7,8,9], count);
+        else q = this.genMixed(count);
+
+        this.questions = q;
+        this.qIndex = 0;
+        this.score = 0;
+        this.streak = 0;
+        this.maxStreakInRound = 0;
+        this.dragonSpellUsed = false;
+
+        document.getElementById('arena-timer-box').style.display = 'none';
+        const bossHud = document.getElementById('arena-boss-hud');
+        if (isBoss) {
+          bossHud.style.display = 'flex';
+          const emojis = { 4: '🐱', 8: '🦖', 12: '🧙‍♂️' };
+          const names = { 4: 'Grominou', 8: 'Draco-Chiffre', 12: 'Grand Sorcier' };
+          document.getElementById('arena-boss-emoji').innerText = emojis[id];
+          document.getElementById('arena-boss-name').innerText = names[id];
+          document.getElementById('arena-player-avatar-emoji').innerText = this.avatar;
+          document.getElementById('arena-player-name-tag').innerText = this.playerName;
+          document.getElementById('arena-boss-hp-bar').style.width = '100%';
+        } else {
+          bossHud.style.display = 'none';
+        }
+
+        this.openArenaView();
+      }
+
+      /* ================= QUICK PLAY ================= */
+      startQuickPlay() {
+        this.activeMode = 'quick';
+        this.questions = this.genMixed(8);
+        this.qIndex = 0;
+        this.score = 0;
+        this.streak = 0;
+        this.maxStreakInRound = 0;
+        this.dragonSpellUsed = false;
+
+        document.getElementById('arena-timer-box').style.display = 'none';
+        document.getElementById('arena-boss-hud').style.display = 'none';
+
+        this.openArenaView();
+      }
+
+      /* ================= MYSTERY / CALCUL À TROU ================= */
+      setMysteryOp(op) {
+        this.mysteryOp = op;
+        document.getElementById('sw-myst-mult').classList.toggle('active', op === 'multiplication');
+        document.getElementById('sw-myst-add').classList.toggle('active', op === 'addition');
+        document.getElementById('sw-myst-mix').classList.toggle('active', op === 'mix');
+      }
+
+      startMysteryGame() {
+        this.activeMode = 'mystery';
+        let q = [];
+        if (this.mysteryOp === 'multiplication') q = this.genQuestions('multiplication', [2,3,4,5,6,7,8,9,10], 8, true);
+        else if (this.mysteryOp === 'addition') q = this.genQuestions('addition', [1,2,3,4,5,6,7,8,9,10], 8, true);
+        else q = this.genMixed(8, true);
+
+        this.questions = q;
+        this.qIndex = 0;
+        this.score = 0;
+        this.streak = 0;
+        this.maxStreakInRound = 0;
+        this.dragonSpellUsed = false;
+
+        document.getElementById('arena-timer-box').style.display = 'none';
+        document.getElementById('arena-boss-hud').style.display = 'none';
+
+        this.openArenaView();
+      }
+
+      /* ================= MEMORY GAME ================= */
+      initMemoryGame() {
+        const pool = [
+          { q: '6 × 7', a: '42' },
+          { q: '8 × 4', a: '32' },
+          { q: '7 × 8', a: '56' },
+          { q: '9 × 5', a: '45' },
+          { q: '8 + 7', a: '15' },
+          { q: '9 + 8', a: '17' }
+        ];
+
+        let cards = [];
+        pool.forEach((pair, idx) => {
+          cards.push({ id: idx, text: pair.q, pairId: idx, isMatch: false });
+          cards.push({ id: idx, text: pair.a, pairId: idx, isMatch: false });
+        });
+
+        for (let i = cards.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [cards[i], cards[j]] = [cards[j], cards[i]];
+        }
+
+        this.memoryCards = cards;
+        this.memoryFlipped = [];
+        this.memoryPairsFound = 0;
+
+        const grid = document.getElementById('memory-cards-grid');
+        grid.innerHTML = '';
+        cards.forEach((c, idx) => {
+          const btn = document.createElement('button');
+          btn.className = 'memory-card-btn';
+          btn.id = `mem-card-${idx}`;
+          btn.innerText = '❓';
+          btn.onclick = () => this.handleMemoryCardClick(idx);
+          grid.appendChild(btn);
+        });
+
+        document.getElementById('memory-pairs-found').innerText = 'Paires : 0 / 6';
+      }
+
+      handleMemoryCardClick(idx) {
+        if (this.memoryFlipped.length >= 2) return;
+        const card = this.memoryCards[idx];
+        const btn = document.getElementById(`mem-card-${idx}`);
+        if (btn.classList.contains('flipped') || btn.classList.contains('matched')) return;
+
+        btn.innerText = card.text;
+        btn.classList.add('flipped');
+        this.memoryFlipped.push({ idx, card });
+
+        if (this.memoryFlipped.length === 2) {
+          const [f1, f2] = this.memoryFlipped;
+          if (f1.card.pairId === f2.card.pairId) {
+            audio.correct(this.memoryPairsFound + 1);
+            this.memoryPairsFound++;
+            document.getElementById('memory-pairs-found').innerText = `Paires : ${this.memoryPairsFound} / 6`;
+            document.getElementById(`mem-card-${f1.idx}`).classList.add('matched');
+            document.getElementById(`mem-card-${f2.idx}`).classList.add('matched');
+            this.memoryFlipped = [];
+
+            if (this.memoryPairsFound === 6) {
+              audio.fanfare();
+              confetti.burst(window.innerWidth / 2, window.innerHeight / 2, 60);
+              this.stars += 15;
+              this.saveProgress();
+              this.showToast("🎉 Victoire au Memory ! +15 ⭐ !");
+            }
+          } else {
+            audio.wrong();
+            setTimeout(() => {
+              document.getElementById(`mem-card-${f1.idx}`).innerText = '❓';
+              document.getElementById(`mem-card-${f1.idx}`).classList.remove('flipped');
+              document.getElementById(`mem-card-${f2.idx}`).innerText = '❓';
+              document.getElementById(`mem-card-${f2.idx}`).classList.remove('flipped');
+              this.memoryFlipped = [];
+            }, 900);
+          }
+        }
+      }
+
+      /* ================= DOJO & PYTHAGORAS ================= */
+      renderDojoTables() {
+        const wrap = document.getElementById('dojo-tables-buttons');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        for (let i = 1; i <= 10; i++) {
+          const btn = document.createElement('button');
+          btn.className = `btn-table-choice ${this.dojoTables.includes(i) ? 'selected' : ''}`;
+          btn.innerText = `Table ${i}`;
+          btn.onclick = () => {
+            if (this.dojoTables.includes(i)) {
+              if (this.dojoTables.length > 1) {
+                this.dojoTables = this.dojoTables.filter(t => t !== i);
+                btn.classList.remove('selected');
+              }
+            } else {
+              this.dojoTables.push(i);
+              btn.classList.add('selected');
+            }
+          };
+          wrap.appendChild(btn);
+        }
+      }
+
+      setDojoOp(op) {
+        this.dojoOp = op;
+        document.getElementById('dojo-sw-mult').classList.toggle('active', op === 'multiplication');
+        document.getElementById('dojo-sw-add').classList.toggle('active', op === 'addition');
+      }
+
+      selectAllDojo(all) {
+        this.dojoTables = all ? [1,2,3,4,5,6,7,8,9,10] : [2];
+        this.renderDojoTables();
+      }
+
+      startDojoGame() {
+        this.activeMode = 'dojo';
+        this.questions = this.genQuestions(this.dojoOp, this.dojoTables, 10);
+        this.qIndex = 0;
+        this.score = 0;
+        this.streak = 0;
+        this.maxStreakInRound = 0;
+        this.dragonSpellUsed = false;
+
+        document.getElementById('arena-timer-box').style.display = 'none';
+        document.getElementById('arena-boss-hud').style.display = 'none';
+
+        this.openArenaView();
+      }
+
+      renderPythagoras() {
+        const grid = document.getElementById('pythagoras-table-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        const corner = document.createElement('div');
+        corner.className = 'pyt-cell header';
+        corner.innerText = '×';
+        grid.appendChild(corner);
+
+        for (let c = 1; c <= 10; c++) {
+          const hc = document.createElement('div');
+          hc.className = 'pyt-cell header';
+          hc.innerText = c;
+          grid.appendChild(hc);
+        }
+
+        for (let r = 1; r <= 10; r++) {
+          const hr = document.createElement('div');
+          hr.className = 'pyt-cell header';
+          hr.innerText = r;
+          grid.appendChild(hr);
+
+          for (let c = 1; c <= 10; c++) {
+            const cell = document.createElement('div');
+            const key = `${r}x${c}`;
+            const count = this.masteredMultiplications[key] || 0;
+            cell.className = `pyt-cell ${count >= 1 ? 'mastered' : ''}`;
+            cell.innerText = r * c;
+            cell.title = `${r} × ${c} = ${r * c} (Réussi ${count} fois)`;
+            grid.appendChild(cell);
+          }
+        }
+      }
+
+      /* ================= CHRONO MODE ================= */
+      setChronoType(type) {
+        this.chronoType = type;
+        document.getElementById('chrono-sw-mult').classList.toggle('active', type === 'multiplication');
+        document.getElementById('chrono-sw-add').classList.toggle('active', type === 'addition');
+        document.getElementById('chrono-sw-mix').classList.toggle('active', type === 'mix');
+      }
+
+      startChronoGame() {
+        this.activeMode = 'chrono';
+        this.score = 0;
+        this.streak = 0;
+        this.maxStreakInRound = 0;
+        this.timeLeft = 60;
+        this.dragonSpellUsed = false;
+
+        if (this.chronoType === 'multiplication') {
+          this.questions = this.genQuestions('multiplication', [1,2,3,4,5,6,7,8,9,10], 80);
+        } else if (this.chronoType === 'addition') {
+          this.questions = this.genQuestions('addition', [1,2,3,4,5,6,7,8,9,10], 80);
+        } else {
+          this.questions = this.genMixed(80);
+        }
+
+        document.getElementById('arena-timer-box').style.display = 'block';
+        document.getElementById('arena-boss-hud').style.display = 'none';
+
+        this.openArenaView();
+
+        if (this.timer) clearInterval(this.timer);
+        document.getElementById('arena-timer-num').innerText = this.timeLeft;
+        this.timer = setInterval(() => {
+          this.timeLeft--;
+          document.getElementById('arena-timer-num').innerText = this.timeLeft;
+          if (this.timeLeft <= 0) {
+            clearInterval(this.timer);
+            this.endChrono();
+          }
+        }, 1000);
+      }
+
+      endChrono() {
+        audio.fanfare();
+        confetti.burst(window.innerWidth / 2, window.innerHeight / 2, 50);
+
+        const isNew = this.score > this.chronoRecord;
+        if (isNew) this.chronoRecord = this.score;
+
+        const starsWon = Math.max(5, Math.floor(this.score * 1.5));
+        this.stars += starsWon;
+        this.pets[this.currentPetType].xp += starsWon;
+        this.saveProgress();
+
+        document.getElementById('modal-emoji-icon').innerText = isNew ? '👑' : '⚡';
+        document.getElementById('modal-heading').innerText = isNew ? 'Nouveau Record !' : 'Temps Écoulé !';
+        document.getElementById('modal-description').innerText = `Tu as réussi ${this.score} calculs en 60 secondes ! Superbe rapidité !`;
+        document.getElementById('modal-score-stat').innerText = `${this.score}`;
+        document.getElementById('modal-stars-stat').innerText = `+${starsWon} ⭐`;
+        document.getElementById('modal-streak-stat').innerText = `🔥 ${this.maxStreakInRound}`;
+        document.getElementById('end-level-modal').classList.add('active');
+      }
+
+      /* ================= QUESTION GENERATION ================= */
+      genQuestions(op, tables, count, isMystery = false) {
+        const res = [];
+        for (let i = 0; i < count; i++) {
+          const a = tables[Math.floor(Math.random() * tables.length)];
+          const b = Math.floor(Math.random() * 10) + 1;
+          const isMult = (op === 'multiplication');
+          const ans = isMult ? (a * b) : (a + b);
+
+          const actualTarget = isMystery ? b : ans;
+
+          const distractors = new Set();
+          while (distractors.size < 3) {
+            let fake;
+            if (isMystery) {
+              fake = Math.floor(Math.random() * 10) + 1;
+            } else {
+              const offset = (Math.floor(Math.random() * 4) + 1) * (Math.random() > 0.5 ? 1 : -1);
+              fake = ans + offset;
+            }
+            if (fake > 0 && fake !== actualTarget) distractors.add(fake);
+          }
+
+          const choices = [actualTarget, ...Array.from(distractors)];
+          for (let j = choices.length - 1; j > 0; j--) {
+            const k = Math.floor(Math.random() * (j + 1));
+            [choices[j], choices[k]] = [choices[k], choices[j]];
+          }
+
+          res.push({
+            a, b,
+            op: isMult ? '×' : '+',
+            ans: actualTarget,
+            displayAns: ans,
+            isMystery: isMystery,
+            choices
+          });
+        }
+        return res;
+      }
+
+      genMixed(count, isMystery = false) {
+        const adds = this.genQuestions('addition', [1,2,3,4,5,6,7,8,9,10], Math.ceil(count / 2), isMystery);
+        const mults = this.genQuestions('multiplication', [2,3,4,5,6,7,8,9,10], Math.floor(count / 2), isMystery);
+        const mixed = [...adds, ...mults];
+        for (let i = mixed.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [mixed[i], mixed[j]] = [mixed[j], mixed[i]];
+        }
+        return mixed;
+      }
+
+      /* ================= ARENA DISPLAY ================= */
+      openArenaView() {
+        document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-gameplay').classList.add('active');
+        this.displayArenaQuestion();
+      }
+
+      displayArenaQuestion() {
+        const q = this.questions[this.qIndex];
+        if (!q) {
+          this.endGameRound();
+          return;
+        }
+
+        const btnSpell = document.getElementById('btn-dragon-spell');
+        if (btnSpell) btnSpell.disabled = this.dragonSpellUsed;
+
+        const targetSlot = document.getElementById('arena-target-box');
+        const numB = document.getElementById('arena-num-b');
+
+        if (q.isMystery) {
+          document.getElementById('arena-instruction-txt').innerText = "TROUVE LE NOMBRE MYSTÈRE '?' :";
+          document.getElementById('arena-num-a').innerText = q.a;
+          document.getElementById('arena-op-symbol').innerText = q.op;
+          numB.innerText = '?';
+          numB.className = 'formula-target-slot mystery';
+          targetSlot.innerText = q.displayAns;
+          targetSlot.className = 'formula-target-slot';
+        } else {
+          document.getElementById('arena-instruction-txt').innerText = "QUEL EST LE RÉSULTAT ?";
+          document.getElementById('arena-num-a').innerText = q.a;
+          document.getElementById('arena-op-symbol').innerText = q.op;
+          numB.innerText = q.b;
+          numB.className = '';
+          targetSlot.innerText = '?';
+          targetSlot.className = 'formula-target-slot';
+        }
+
+        const total = this.questions.length;
+        const pct = (this.qIndex / total) * 100;
+        document.getElementById('arena-progress-fill').style.width = `${pct}%`;
+        document.getElementById('arena-score-val').innerText = this.score;
+
+        for (let i = 0; i < 4; i++) {
+          const b = document.getElementById(`choice-btn-${i}`);
+          if (b) {
+            b.className = 'btn-choice';
+            b.innerText = q.choices[i];
+            b.disabled = false;
+          }
+        }
+      }
+
+      useDragonSpell() {
+        if (this.dragonSpellUsed) return;
+        this.dragonSpellUsed = true;
+        document.getElementById('btn-dragon-spell').disabled = true;
+        audio.spell();
+        confetti.burst(window.innerWidth / 2, window.innerHeight * 0.45, 20);
+
+        const q = this.questions[this.qIndex];
+        let eliminated = 0;
+        for (let i = 0; i < 4; i++) {
+          if (q.choices[i] !== q.ans && eliminated < 2) {
+            document.getElementById(`choice-btn-${i}`).classList.add('eliminated');
+            eliminated++;
+          }
+        }
+        this.showToast("✨ Le dragon a éliminé 2 mauvaises réponses !");
+      }
+
+      handleAnswerClick(idx) {
+        const q = this.questions[this.qIndex];
+        if (!q) return;
+
+        const val = q.choices[idx];
+        const isCorrect = (val === q.ans);
+        const btn = document.getElementById(`choice-btn-${idx}`);
+
+        if (isCorrect) {
+          if (btn) btn.classList.add('correct');
+          this.score++;
+          this.streak++;
+          if (this.streak > this.maxStreakInRound) this.maxStreakInRound = this.streak;
+          if (this.streak > this.streakRecord) this.streakRecord = this.streak;
+          this.saveProgress();
+
+          audio.correct(this.streak);
+          confetti.burst(window.innerWidth / 2, window.innerHeight * 0.45, 18);
+
+          if (q.op === '×') {
+            const key = `${q.a}x${q.b}`;
+            this.masteredMultiplications[key] = (this.masteredMultiplications[key] || 0) + 1;
+          }
+
+          if (this.activeMode === 'adventure' && document.getElementById('arena-boss-hud').style.display !== 'none') {
+            const hpLeft = Math.max(0, 100 - (this.score / this.questions.length) * 100);
+            document.getElementById('arena-boss-hp-bar').style.width = `${hpLeft}%`;
+          }
+        } else {
+          if (btn) btn.classList.add('wrong');
+          audio.wrong();
+          this.streak = 0;
+          for (let i = 0; i < 4; i++) {
+            if (q.choices[i] === q.ans) {
+              const r = document.getElementById(`choice-btn-${i}`);
+              if (r) r.classList.add('correct');
+            }
+          }
+        }
+
+        if (q.isMystery) {
+          document.getElementById('arena-num-b').innerText = q.b;
+        } else {
+          document.getElementById('arena-target-box').innerText = q.ans;
+        }
+
+        for (let i = 0; i < 4; i++) {
+          const b = document.getElementById(`choice-btn-${i}`);
+          if (b) b.disabled = true;
+        }
+
+        setTimeout(() => {
+          this.qIndex++;
+          this.displayArenaQuestion();
+        }, isCorrect ? 600 : 1500);
+      }
+
+      endGameRound() {
+        if (this.timer) clearInterval(this.timer);
+        audio.fanfare();
+        confetti.burst(window.innerWidth / 2, window.innerHeight / 2, 55);
+
+        const total = this.questions.length;
+        const ratio = this.score / total;
+        let starsWon = 1;
+        if (ratio >= 0.75) starsWon = 2;
+        if (ratio === 1) starsWon = 3;
+
+        this.stars += (starsWon * 5);
+        this.pets[this.currentPetType].xp += (starsWon * 6);
+        this.checkPetEvolution(this.pets[this.currentPetType]);
+        this.saveProgress();
+
+        if (this.activeMode === 'adventure') {
+          const lvl = this.currentLvl;
+          if (this.score >= Math.ceil(total * 0.6)) {
+            if (!this.levels[lvl]) this.levels[lvl] = {};
+            this.levels[lvl].completed = true;
+            this.levels[lvl].stars = Math.max(this.levels[lvl].stars || 0, starsWon);
+            if (lvl < 12 && !this.levels[lvl + 1]) {
+              this.levels[lvl + 1] = { completed: false, stars: 0 };
+            }
+          }
+        }
+
+        document.getElementById('modal-emoji-icon').innerText = ratio >= 0.75 ? '🎉' : '💪';
+        document.getElementById('modal-heading').innerText = ratio >= 0.75 ? 'Victoire Magique !' : 'Bel Effort !';
+        document.getElementById('modal-description').innerText = `Tu as trouvé ${this.score} bonnes réponses sur ${total} !`;
+        document.getElementById('modal-score-stat').innerText = `${this.score}/${total}`;
+        document.getElementById('modal-stars-stat').innerText = `+${starsWon * 5} ⭐`;
+        document.getElementById('modal-streak-stat').innerText = `🔥 ${this.maxStreakInRound}`;
+        document.getElementById('end-level-modal').classList.add('active');
+      }
+
+      closeEndModal() {
+        document.getElementById('end-level-modal').classList.remove('active');
+        if (this.activeMode === 'adventure') this.switchTab('adventure');
+        else if (this.activeMode === 'mystery') this.switchTab('mystery');
+        else this.switchTab('home');
+      }
+
+      quitGame() {
+        if (this.timer) clearInterval(this.timer);
+        this.switchTab('home');
+      }
+
+      /* ================= FINGERS TOOL ================= */
+      renderFingersTool() {
+        const wrap = document.getElementById('interactive-fingers-row');
+        if (!wrap) return;
+        wrap.innerHTML = '';
+        for (let i = 1; i <= 10; i++) {
+          const btn = document.createElement('button');
+          btn.className = 'btn-finger';
+          btn.innerText = i;
+          btn.onclick = () => this.touchFinger(i);
+          wrap.appendChild(btn);
+        }
+      }
+
+      touchFinger(n) {
+        document.querySelectorAll('.btn-finger').forEach((b, idx) => {
+          b.classList.toggle('folded', (idx + 1) === n);
+        });
+        const left = n - 1;
+        const right = 10 - n;
+        const res = (left * 10) + right;
+        document.getElementById('finger-result-display').innerHTML = `
+          Doigt n°<strong>${n}</strong> baissé 👉 
+          <span style="color:#059669;">${left} dizaine(s)</span> + 
+          <span style="color:#2563EB;">${right} unité(s)</span> = 
+          <strong style="color:#E11D48; font-size:1.25rem;">9 × ${n} = ${res}</strong> ! ✨
+        `;
+      }
+    }
+
+    // Initialize Global App
+    const app = new MathQuestApp();
+  </script>
+</body>
+</html>
