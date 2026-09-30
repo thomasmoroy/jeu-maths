@@ -1711,8 +1711,16 @@
         this.memoryFlipped = [];
         this.memoryPairsFound = 0;
 
+        this.cloudDocId = null;
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            this.cloudDocId = window.localStorage.getItem('magic_maths_cloud_id') || null;
+          }
+        } catch(e) {}
+
         // Auto-check URL for magic link on first launch
         this.checkUrlForSave();
+        this.checkCloudOnStartup();
         this.init();
       }
 
@@ -1813,16 +1821,102 @@
         this.syncDatabaseSilent();
       }
 
-      /* ================= SQLITE DATABASE OPERATIONS ================= */
-      async syncDatabaseSilent() {
+      /* ================= 100% INVISIBLE CLOUD AUTO-SAVE ================= */
+      async checkCloudOnStartup() {
         try {
-          const payload = this.getPayload();
-          await fetch('/api/save', {
+          if (!this.cloudDocId && typeof window !== 'undefined' && window.localStorage) {
+            this.cloudDocId = window.localStorage.getItem('magic_maths_cloud_id');
+          }
+          if (this.cloudDocId) {
+            const resp = await fetch(`https://api.restful-api.dev/objects/${this.cloudDocId}`);
+            if (resp.ok) {
+              const json = await resp.json();
+              if (json && json.data && json.data.stars !== undefined) {
+                // If cloud data is newer or has higher stars, seamlessly update
+                if ((json.data.stars || 0) >= (this.stars || 0)) {
+                  this.applySaveData(json.data, false);
+                  this.updateCloudIndicator(true);
+                }
+              }
+            }
+          } else {
+            // First time launch: register this player on cloud silently
+            this.syncCloudBackground();
+          }
+        } catch(e) {
+          // Silent fallback to local storage
+        }
+      }
+
+      async syncCloudBackground() {
+        const payload = this.getPayload();
+
+        // 1. Silent sync to local SQLite / Python / Vercel API if running
+        try {
+          fetch('/api/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: this.sqlCode, data: payload })
-          });
+          }).catch(() => {});
         } catch(e) {}
+
+        // 2. Silent sync to Universal Online Cloud REST Database
+        try {
+          if (this.cloudDocId) {
+            await fetch(`https://api.restful-api.dev/objects/${this.cloudDocId}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: `magic_player_${this.playerName}_${this.sqlCode}`,
+                data: payload
+              })
+            });
+            this.updateCloudIndicator(true);
+          } else {
+            const resp = await fetch('https://api.restful-api.dev/objects', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: `magic_player_${this.playerName}_${this.sqlCode}`,
+                data: payload
+              })
+            });
+            if (resp.ok) {
+              const json = await resp.json();
+              if (json && json.id) {
+                this.cloudDocId = json.id;
+                if (typeof window !== 'undefined' && window.localStorage) {
+                  window.localStorage.setItem('magic_maths_cloud_id', json.id);
+                }
+                this.updateCloudIndicator(true);
+              }
+            }
+          }
+        } catch(e) {
+          // If offline or network drop, local storage already persisted everything
+          this.updateCloudIndicator(false);
+        }
+      }
+
+      updateCloudIndicator(isOnline) {
+        const badge = document.getElementById('cloud-status-badge');
+        if (badge) {
+          if (isOnline) {
+            badge.innerHTML = '☁️ <span style="font-size:0.75rem;">En ligne</span>';
+            badge.style.background = '#ECFDF5';
+            badge.style.borderColor = '#A7F3D0';
+            badge.style.color = '#047857';
+          } else {
+            badge.innerHTML = '📱 <span style="font-size:0.75rem;">Local</span>';
+            badge.style.background = '#F8FAFC';
+            badge.style.borderColor = '#CBD5E1';
+            badge.style.color = '#475569';
+          }
+        }
+      }
+
+      async syncDatabaseSilent() {
+        await this.syncCloudBackground();
       }
 
       openDatabaseModal() {
