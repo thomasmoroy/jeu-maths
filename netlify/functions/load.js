@@ -1,7 +1,15 @@
-const { getDB, players } = require('../../db/index.js');
-const { eq, or, sql } = require('drizzle-orm');
+const { neon } = require('@neondatabase/serverless');
 
-const memoryFallback = global._memStore || (global._memStore = {});
+const fallbackStore = global._memStore || (global._memStore = {});
+
+function getDbClient() {
+  const dbUrl = process.env.DATABASE_URL ||
+                process.env.NETLIFY_DATABASE_URL ||
+                process.env.NEON_DATABASE_URL ||
+                process.env.NETLIFY_NEON_DATABASE_URL;
+  if (!dbUrl) return null;
+  return neon(dbUrl);
+}
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -29,33 +37,66 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const upperKey = queryKey ? queryKey.toUpperCase() : '';
-    const db = getDB();
+    const upperCode = queryKey.toUpperCase();
+    const sql = getDbClient();
 
-    if (db) {
-      const conditions = [];
-      if (googleId) conditions.push(eq(players.googleId, googleId));
-      if (email) conditions.push(eq(players.email, email));
-      if (upperKey) conditions.push(eq(players.code, upperKey));
-      if (queryKey) conditions.push(sql`LOWER(${players.name}) = LOWER(${queryKey})`);
+    if (sql) {
+      // 1. If Google User, lookup by google_id or email
+      if (googleId || email) {
+        const rowsByGoogle = await sql`
+          SELECT save_data, updated_at, stars, avatar, name, code, google_id, email
+          FROM players
+          WHERE (google_id = ${googleId || null} AND ${googleId !== ''})
+             OR (email = ${email || null} AND ${email !== ''})
+          LIMIT 1;
+        `;
 
-      const rows = await db.select().from(players).where(or(...conditions)).limit(1);
+        if (rowsByGoogle.length > 0) {
+          const r = rowsByGoogle[0];
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              db: 'Neon PostgreSQL (Google Account)',
+              code: r.code,
+              googleId: r.google_id,
+              email: r.email,
+              name: r.name,
+              stars: r.stars,
+              avatar: r.avatar,
+              data: r.save_data,
+              updated_at: r.updated_at
+            })
+          };
+        }
+      }
+
+      // 2. Lookup by code OR by name (case-insensitive)
+      const rows = await sql`
+        SELECT save_data, updated_at, stars, avatar, name, code, google_id, email
+        FROM players
+        WHERE code = ${upperCode}
+           OR LOWER(name) = LOWER(${queryKey})
+        LIMIT 1;
+      `;
 
       if (rows.length > 0) {
-        const p = rows[0];
+        const r = rows[0];
         return {
           statusCode: 200,
           headers,
           body: JSON.stringify({
             success: true,
-            db: 'Netlify PostgreSQL',
-            code: p.code,
-            googleId: p.googleId,
-            email: p.email,
-            name: p.name,
-            stars: p.stars,
-            data: p.data,
-            updated_at: p.updatedAt
+            db: 'Neon PostgreSQL',
+            code: r.code,
+            googleId: r.google_id,
+            email: r.email,
+            name: r.name,
+            stars: r.stars,
+            avatar: r.avatar,
+            data: r.save_data,
+            updated_at: r.updated_at
           })
         };
       } else {
@@ -64,13 +105,13 @@ exports.handler = async (event, context) => {
           headers,
           body: JSON.stringify({
             success: false,
-            error: `Aucun compte trouvé`
+            error: `Aucun joueur trouvé avec l'identifiant '${queryKey || email || googleId}'`
           })
         };
       }
     } else {
-      const key = googleId || email || upperKey || queryKey.toLowerCase();
-      const p = memoryFallback[key];
+      const key = googleId || email || upperCode || queryKey.toLowerCase();
+      const p = fallbackStore[key];
       if (p) {
         return {
           statusCode: 200,
@@ -89,11 +130,11 @@ exports.handler = async (event, context) => {
       return {
         statusCode: 404,
         headers,
-        body: JSON.stringify({ success: false, error: `Compte introuvable` })
+        body: JSON.stringify({ success: false, error: 'Compte introuvable' })
       };
     }
   } catch (error) {
-    console.error('Netlify Database Load Error:', error);
+    console.error('Load Handler Error:', error);
     return {
       statusCode: 500,
       headers,

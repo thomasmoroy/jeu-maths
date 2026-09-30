@@ -1927,12 +1927,18 @@
       }
 
       async loadFromNetlifyDatabase(name, code, googleId, email) {
+        const queryName = name || this.playerName;
+        const queryGoogleId = googleId || (this.googleUser ? this.googleUser.id : null);
+        const queryEmail = email || (this.googleUser ? this.googleUser.email : null);
+        const queryCode = code || this.sqlCode;
+
+        // 1. Try Netlify Serverless PostgreSQL (/api/load)
         try {
           const params = new URLSearchParams();
-          if (googleId) params.append('googleId', googleId);
-          if (email) params.append('email', email);
-          if (code) params.append('code', code);
-          if (name) params.append('name', name);
+          if (queryGoogleId) params.append('googleId', queryGoogleId);
+          if (queryEmail) params.append('email', queryEmail);
+          if (queryCode) params.append('code', queryCode);
+          if (queryName) params.append('name', queryName);
 
           const resp = await fetch(`/api/load?${params.toString()}`);
           if (resp.ok) {
@@ -1942,30 +1948,67 @@
               return true;
             }
           }
-        } catch(e) {
-          // Offline / fallback: localStorage is active
-        }
+        } catch(e) {}
+
+        // 2. Fallback to Shared Global Cloud DB by Name
+        try {
+          const key = (queryEmail || queryName || 'lea').trim().toLowerCase();
+          const CLOUD_DB_ID = "ff808181a09d98f701a0f1aa0d0c49ed";
+          const resp = await fetch(`https://api.restful-api.dev/objects/${CLOUD_DB_ID}`);
+          if (resp.ok) {
+            const json = await resp.json();
+            const players = (json.data && json.data.players) || {};
+            const cloudSave = players[key];
+            if (cloudSave && cloudSave.stars !== undefined) {
+              this.applySaveData(cloudSave, false);
+              return true;
+            }
+          }
+        } catch(e) {}
+
         return false;
       }
 
       async syncCloudBackground() {
         const payload = this.getPayload();
+        const googleId = this.googleUser ? this.googleUser.id : null;
+        const email = this.googleUser ? this.googleUser.email : null;
+        const key = (email || this.playerName || 'lea').trim().toLowerCase();
 
-        // Direct async save to Netlify Database (PostgreSQL via Netlify Function)
+        // 1. Direct async save to Netlify Database (PostgreSQL via Netlify Function)
         try {
           await fetch('/api/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               code: this.sqlCode,
-              googleId: this.googleUser ? this.googleUser.id : null,
-              email: this.googleUser ? this.googleUser.email : null,
+              googleId,
+              email,
               data: payload
             })
           });
-        } catch(e) {
-          // If offline or network drop, localStorage already persisted everything
-        }
+        } catch(e) {}
+
+        // 2. Global Multi-Device Online Cloud Backup
+        try {
+          const CLOUD_DB_ID = "ff808181a09d98f701a0f1aa0d0c49ed";
+          const getResp = await fetch(`https://api.restful-api.dev/objects/${CLOUD_DB_ID}`);
+          let players = {};
+          if (getResp.ok) {
+            const getJson = await getResp.json();
+            players = (getJson.data && getJson.data.players) || {};
+          }
+          players[key] = payload;
+
+          await fetch(`https://api.restful-api.dev/objects/${CLOUD_DB_ID}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: 'magic_maths_global_db_thomas',
+              data: { players }
+            })
+          });
+        } catch(e) {}
       }
 
       async syncDatabaseSilent() {
