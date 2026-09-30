@@ -1735,82 +1735,45 @@
         this.syncDatabaseSilent();
       }
 
-      /* ================= 100% INVISIBLE SHARED CLOUD DATABASE ================= */
+      /* ================= NETLIFY DATABASE (POSTGRESQL & DRIZZLE) ================= */
       async checkCloudOnStartup() {
-        await this.loadFromSharedCloudDB(this.playerName);
+        await this.loadFromNetlifyDatabase(this.playerName, this.sqlCode);
       }
 
-      async loadFromSharedCloudDB(name) {
-        if (!name) return;
-        const key = name.trim().toLowerCase();
-
-        // 1. Try loading from Neon PostgreSQL on Netlify (/api/load)
+      async loadFromNetlifyDatabase(name, code) {
         try {
-          const netlifyResp = await fetch(`/api/load?name=${encodeURIComponent(name)}`);
-          if (netlifyResp.ok) {
-            const json = await netlifyResp.json();
+          const query = code ? `code=${encodeURIComponent(code)}` : `name=${encodeURIComponent(name || this.playerName)}`;
+          const resp = await fetch(`/api/load?${query}`);
+          if (resp.ok) {
+            const json = await resp.json();
             if (json.success && json.data) {
-              this.applySaveData(json.data, false);
+              // If server has more stars or valid data, seamlessly apply it
+              if ((json.data.stars || 0) >= (this.stars || 0)) {
+                this.applySaveData(json.data, false);
+              }
               return;
             }
           }
-        } catch(e) {}
-
-        // 2. Fallback to Shared Global Cloud DB
-        try {
-          const CLOUD_DB_ID = "ff808181a09d98f701a0f1aa0d0c49ed";
-          const resp = await fetch(`https://api.restful-api.dev/objects/${CLOUD_DB_ID}`);
-          if (resp.ok) {
-            const json = await resp.json();
-            const players = (json.data && json.data.players) || {};
-            const cloudSave = players[key];
-            if (cloudSave && cloudSave.stars !== undefined) {
-              if ((cloudSave.stars || 0) >= (this.stars || 0)) {
-                this.applySaveData(cloudSave, false);
-              }
-            } else {
-              await this.syncCloudBackground();
-            }
-          }
         } catch(e) {
-          // Silent fallback to local storage
+          // Offline fallback: localStorage is already active
         }
       }
 
       async syncCloudBackground() {
         const payload = this.getPayload();
-        const key = (this.playerName || 'lea').trim().toLowerCase();
 
-        // 1. Local Python / Vercel server if running
+        // Direct async save to Netlify Database (PostgreSQL via Netlify Function)
         try {
-          fetch('/api/save', {
+          await fetch('/api/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code: this.sqlCode, data: payload })
-          }).catch(() => {});
-        } catch(e) {}
-
-        // 2. Global Multi-Device Online Cloud Database
-        try {
-          const CLOUD_DB_ID = "ff808181a09d98f701a0f1aa0d0c49ed";
-          const getResp = await fetch(`https://api.restful-api.dev/objects/${CLOUD_DB_ID}`);
-          let players = {};
-          if (getResp.ok) {
-            const getJson = await getResp.json();
-            players = (getJson.data && getJson.data.players) || {};
-          }
-          players[key] = payload;
-
-          await fetch(`https://api.restful-api.dev/objects/${CLOUD_DB_ID}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              name: 'magic_maths_global_db_thomas',
-              data: { players }
+              code: this.sqlCode,
+              data: payload
             })
           });
         } catch(e) {
-          // If offline, localStorage already saved everything
+          // If offline or network drop, localStorage already persisted everything
         }
       }
 

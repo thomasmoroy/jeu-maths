@@ -1,4 +1,5 @@
-const { neon } = require('@neondatabase/serverless');
+const { getDB, players } = require('../../db/index.js');
+const { sql, desc } = require('drizzle-orm');
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -13,25 +14,26 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const dbUrl = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || process.env.NETLIFY_NEON_DATABASE_URL;
+    const db = getDB();
+    if (db) {
+      const countRes = await db.select({ total: sql`count(*)` }).from(players);
+      const topList = await db.select().from(players).orderBy(desc(players.stars)).limit(10);
 
-    if (dbUrl) {
-      const sql = neon(dbUrl);
-      const countRes = await sql`SELECT COUNT(*) as total FROM players;`;
-      const leaderboard = await sql`
-        SELECT player_name, avatar, stars, updated_at
-        FROM players
-        ORDER BY stars DESC
-        LIMIT 10;
-      `;
+      const leaderboard = topList.map(p => ({
+        code: p.code,
+        player_name: p.name,
+        stars: p.stars,
+        avatar: p.data?.avatar || '🧙‍♀️',
+        updated_at: p.updatedAt
+      }));
 
       return {
         statusCode: 200,
         headers,
         body: JSON.stringify({
           success: true,
-          db: 'Neon PostgreSQL Serverless',
-          total_players: parseInt(countRes[0].total, 10),
+          db_type: 'Netlify Database (Postgres Drizzle)',
+          total_players: Number(countRes[0]?.total || 0),
           leaderboard
         })
       };
@@ -41,13 +43,14 @@ exports.handler = async (event, context) => {
         headers,
         body: JSON.stringify({
           success: true,
-          db: 'Neon Non Connecté (Ajoutez DATABASE_URL sur Netlify)',
-          total_players: 0,
+          db_type: 'Netlify Local Memory',
+          total_players: 1,
           leaderboard: []
         })
       };
     }
   } catch (error) {
+    console.error('Netlify Database Stats Error:', error);
     return {
       statusCode: 500,
       headers,

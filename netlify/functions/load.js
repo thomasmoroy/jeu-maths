@@ -1,6 +1,7 @@
-const { neon } = require('@neondatabase/serverless');
+const { getDB, players } = require('../../db/index.js');
+const { eq, or, sql } = require('drizzle-orm');
 
-const fallbackStore = global._neonFallbackStore || (global._neonFallbackStore = {});
+const memoryFallback = global._memStore || (global._memStore = {});
 
 exports.handler = async (event, context) => {
   const headers = {
@@ -16,36 +17,41 @@ exports.handler = async (event, context) => {
 
   try {
     const params = event.queryStringParameters || {};
-    const name = (params.name || params.player || params.code || '').trim();
+    const queryKey = (params.code || params.name || params.player || '').trim();
 
-    if (!name) {
+    if (!queryKey) {
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ success: false, error: 'Nom du joueur manquant' })
+        body: JSON.stringify({ success: false, error: 'Paramètre code ou nom manquant' })
       };
     }
 
-    const dbUrl = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL || process.env.NETLIFY_NEON_DATABASE_URL;
+    const upperKey = queryKey.toUpperCase();
+    const db = getDB();
 
-    if (dbUrl) {
-      const sql = neon(dbUrl);
-      const rows = await sql`
-        SELECT save_data, updated_at, stars, avatar, player_name
-        FROM players
-        WHERE LOWER(player_name) = LOWER(${name})
-        LIMIT 1;
-      `;
+    if (db) {
+      // Find by code OR case-insensitive name
+      const rows = await db.select().from(players).where(
+        or(
+          eq(players.code, upperKey),
+          sql`LOWER(${players.name}) = LOWER(${queryKey})`
+        )
+      ).limit(1);
 
       if (rows.length > 0) {
+        const p = rows[0];
         return {
           statusCode: 200,
           headers,
           body: JSON.stringify({
             success: true,
-            db: 'Neon PostgreSQL',
-            updated_at: rows[0].updated_at,
-            data: rows[0].save_data
+            db: 'Netlify Database (Postgres)',
+            code: p.code,
+            name: p.name,
+            stars: p.stars,
+            data: p.data,
+            updated_at: p.updatedAt
           })
         };
       } else {
@@ -54,31 +60,35 @@ exports.handler = async (event, context) => {
           headers,
           body: JSON.stringify({
             success: false,
-            error: `Aucun joueur trouvé avec le nom '${name}' dans Neon Postgres`
+            error: `Joueur '${queryKey}' introuvable dans Netlify Database`
           })
         };
       }
     } else {
-      const saved = fallbackStore[name.toLowerCase()];
-      if (saved) {
+      const p = memoryFallback[upperKey] || memoryFallback[queryKey.toLowerCase()];
+      if (p) {
         return {
           statusCode: 200,
           headers,
           body: JSON.stringify({
             success: true,
-            db: 'Memory Fallback',
-            data: saved
+            db: 'Netlify Local Store',
+            code: p.code,
+            name: p.name,
+            stars: p.stars,
+            data: p.data,
+            updated_at: p.updatedAt
           })
         };
       }
       return {
         statusCode: 404,
         headers,
-        body: JSON.stringify({ success: false, error: 'Joueur introuvable' })
+        body: JSON.stringify({ success: false, error: `Joueur '${queryKey}' introuvable` })
       };
     }
   } catch (error) {
-    console.error('Neon load error:', error);
+    console.error('Netlify Database Load Error:', error);
     return {
       statusCode: 500,
       headers,
