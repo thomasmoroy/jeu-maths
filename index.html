@@ -1737,26 +1737,40 @@
 
       /* ================= NETLIFY DATABASE (POSTGRESQL & DRIZZLE) ================= */
       async checkCloudOnStartup() {
-        await this.loadFromNetlifyDatabase(this.playerName, this.sqlCode);
+        // 1. Check if URL has ?name=Thomas or ?joueur=Emma or ?code=MAGIE-784
+        try {
+          if (typeof window !== 'undefined' && window.location) {
+            const params = new URLSearchParams(window.location.search);
+            const nameParam = params.get('name') || params.get('joueur') || params.get('player');
+            const codeParam = params.get('code');
+            if (nameParam || codeParam) {
+              const loaded = await this.loadFromNetlifyDatabase(nameParam, codeParam);
+              if (loaded) return;
+            }
+          }
+        } catch(e) {}
+
+        // 2. Sync with existing saved player name
+        if (this.playerName && this.playerName !== 'Léa') {
+          await this.loadFromNetlifyDatabase(this.playerName, this.sqlCode);
+        }
       }
 
       async loadFromNetlifyDatabase(name, code) {
         try {
-          const query = code ? `code=${encodeURIComponent(code)}` : `name=${encodeURIComponent(name || this.playerName)}`;
-          const resp = await fetch(`/api/load?${query}`);
+          const queryKey = code ? `code=${encodeURIComponent(code)}` : `name=${encodeURIComponent(name || this.playerName)}`;
+          const resp = await fetch(`/api/load?${queryKey}`);
           if (resp.ok) {
             const json = await resp.json();
             if (json.success && json.data) {
-              // If server has more stars or valid data, seamlessly apply it
-              if ((json.data.stars || 0) >= (this.stars || 0)) {
-                this.applySaveData(json.data, false);
-              }
-              return;
+              this.applySaveData(json.data, false);
+              return true;
             }
           }
         } catch(e) {
-          // Offline fallback: localStorage is already active
+          // Offline / fallback: localStorage is active
         }
+        return false;
       }
 
       async syncCloudBackground() {
